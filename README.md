@@ -84,6 +84,26 @@ Tycoon Roblox — Koh Phangan. **[`docs/BLUEPRINT.md`](docs/BLUEPRINT.md) est le
 - **Effet Legendary « +1 min Full Moon »** (§5.2) : **différé** (interagit avec l'horloge globale synchronisée §10.5) ; les effets Legendary revenu global + Hype sont livrés.
 - **Approximation zone/global** : « revenu de zone » vs « global » collapse sur le taux mono-plot actuel (documenté ; à raffiner avec le split de taux par zone).
 
+### Sprint 5 (Social & monétisation) ✅
+
+| Tâche | Statut |
+|---|---|
+| `MonetizationService` §8 — **`ProcessReceipt` idempotent** (§8.4.3/§10.5 : claim du PurchaseId avant grant, `SaveNow`, retour `PurchaseGranted` sur retry sans double-grant), Game Passes (`UserOwnsGamePassAsync` + `PromptGamePassPurchaseFinished`) | ✅ |
+| Effets §8.1/§8.2 — Auto-Collect (banque auto), VIP +25 % (mult. externe), Golden Boat +10 % NPC, packs de Shells, Hype Boost +20/30 min, Instant Repair All | ✅ |
+| `SocialService` §6 — **visites inter-plots** (téléport), Festival Rating 1-5★ (1 vote/hôte/jour), quête quotidienne « Visit 3 », bonus ami +5 % | ✅ |
+| Schéma **v3 + migration** — `purchaseHistory` (ledger idempotence), `festivalRating`, `social` (état quotidien) | ✅ |
+| `BuildService` — multiplicateurs externes génériques (staff/ami/VIP), auto-collect, `RepairAll` | ✅ |
+| Client — panneaux 💎 Store (prompts pass/produits) et 🌐 Festivals (visiter, noter, rentrer), Moon Shards au HUD | ✅ |
+| Tests TestEZ — idempotence `ProcessReceipt`, intégrité catalogue §8, rating/quête/1-vote-jour, migration v3 (`tests/Monetization.spec.luau`, `tests/Social.spec.luau`) | ✅ |
+
+**DoD S5 :** « Transaction Robux test validée, visite inter-plots validée ». La transaction Robux passe par `ProcessReceipt` idempotent, dont le cœur (`_claimPurchase`) est prouvé par test (pas de double-grant sur re-livraison). La visite inter-plots téléporte le visiteur vers la parcelle d'un autre joueur et enregistre la visite (quête quotidienne).
+
+**Décisions & amendements S5 (17/07/2026) :**
+- **IDs d'assets = `0` placeholders** : `gamePassId`/`productId` renseignés dans Studio (§10.1) ; `ProcessReceipt` clef par ces IDs → rien n'est accordé avant. Le pipeline est complet et testé.
+- **Montants des packs de Shells** (non spécifiés §8.2) : 99→5k, 249→15k, 599→42k, 1 299→100k (`Config/Monetization.luau`).
+- **`Config/Monetization.luau`** : nouveau fichier config (principe config-driven §10.3.3, hors liste illustrative §10.2).
+- **Différés** : Extra Plot Slot (§8.1 — persistance multi-plot) et bonus « +10 % Shells sur achats en visite » (§6 — modèle de dépense inter-plot) ; la visite livre téléport + quête + rating + bonus ami.
+
 ## Setup
 
 ```sh

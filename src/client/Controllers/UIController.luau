@@ -6,6 +6,7 @@
 -- everything. Prices shown here are display-only (recomputed server-side).
 -- Palette §9: deep navy #0B1D3A, lunar gold #FFD166, neon cyan #00E5FF.
 
+local MarketplaceService = game:GetService("MarketplaceService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
@@ -14,6 +15,7 @@ local Net = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Util"
 local Economy = require(ReplicatedStorage.Shared.Config.Economy)
 local Equipment = require(ReplicatedStorage.Shared.Config.Equipment)
 local Staff = require(ReplicatedStorage.Shared.Config.Staff)
+local Monetization = require(ReplicatedStorage.Shared.Config.Monetization)
 local EconomyMath = require(ReplicatedStorage.Shared.Util.EconomyMath)
 local Formatter = require(ReplicatedStorage.Shared.Util.Formatter)
 
@@ -623,6 +625,227 @@ function UIController.Start()
 			end
 		end
 	end)
+
+	----------------------------------------------------------------------
+	-- Top-right toggles: 💎 Store (§8) and 🌐 Hub (§6). Panels are hidden
+	-- until toggled to keep the HUD uncluttered.
+	----------------------------------------------------------------------
+	local function makePanel(titleText: string): Frame
+		local frame = create("Frame", {
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.fromScale(0.5, 0.5),
+			Size = UDim2.fromOffset(320, 380),
+			BackgroundColor3 = COLOR_NAVY,
+			BackgroundTransparency = 0.05,
+			BorderSizePixel = 0,
+			Visible = false,
+		}, gui) :: Frame
+		create("UICorner", { CornerRadius = UDim.new(0, 12) }, frame)
+		create("TextLabel", {
+			Position = UDim2.fromOffset(0, 8),
+			Size = UDim2.new(1, 0, 0, 26),
+			BackgroundTransparency = 1,
+			Font = Enum.Font.GothamBold,
+			TextSize = 18,
+			TextColor3 = COLOR_GOLD,
+			Text = titleText,
+		}, frame)
+		local close = create("TextButton", {
+			AnchorPoint = Vector2.new(1, 0),
+			Position = UDim2.new(1, -8, 0, 8),
+			Size = UDim2.fromOffset(26, 26),
+			BackgroundColor3 = COLOR_DANGER,
+			BorderSizePixel = 0,
+			Font = Enum.Font.GothamBold,
+			TextSize = 16,
+			TextColor3 = COLOR_WHITE,
+			Text = "✕",
+		}, frame) :: TextButton
+		create("UICorner", { CornerRadius = UDim.new(0, 6) }, close)
+		close.Activated:Connect(function()
+			frame.Visible = false
+		end)
+		return frame
+	end
+
+	local function makeToggle(icon: string, order: number, panel: Frame)
+		local button = create("TextButton", {
+			AnchorPoint = Vector2.new(1, 0),
+			Position = UDim2.new(1, -12, 0, 12 + (order - 1) * 44),
+			Size = UDim2.fromOffset(40, 40),
+			BackgroundColor3 = COLOR_NAVY,
+			BackgroundTransparency = 0.1,
+			BorderSizePixel = 0,
+			Font = Enum.Font.GothamBold,
+			TextSize = 20,
+			TextColor3 = COLOR_GOLD,
+			Text = icon,
+		}, gui) :: TextButton
+		create("UICorner", { CornerRadius = UDim.new(0, 10) }, button)
+		button.Activated:Connect(function()
+			panel.Visible = not panel.Visible
+		end)
+	end
+
+	-- 💎 Store (§8) — Game Passes + Developer Products (accelerators, §8.4).
+	local storePanel = makePanel("💎 Store")
+	local storeList = create("ScrollingFrame", {
+		Position = UDim2.fromOffset(10, 40),
+		Size = UDim2.new(1, -20, 1, -48),
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		ScrollBarThickness = 4,
+		CanvasSize = UDim2.fromOffset(0, 0),
+		AutomaticCanvasSize = Enum.AutomaticSize.Y,
+	}, storePanel) :: ScrollingFrame
+	create("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, storeList)
+
+	local function storeRow(order: number, label: string, robux: number, onBuy: () -> ())
+		local button = create("TextButton", {
+			Size = UDim2.new(1, 0, 0, 40),
+			LayoutOrder = order,
+			BackgroundColor3 = Color3.fromRGB(20, 45, 85),
+			BorderSizePixel = 0,
+			Font = Enum.Font.GothamMedium,
+			TextSize = 13,
+			TextColor3 = COLOR_WHITE,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			Text = `  {label}\n  R$ {robux}`,
+		}, storeList) :: TextButton
+		create("UICorner", { CornerRadius = UDim.new(0, 8) }, button)
+		button.Activated:Connect(onBuy)
+	end
+
+	local storeOrder = 0
+	for _, pass in Monetization.passes do
+		storeOrder += 1
+		storeRow(storeOrder, `🎟️ {pass.displayName}`, pass.robux, function()
+			if pass.gamePassId == 0 then
+				showToast("This pass isn't published yet.")
+			else
+				MarketplaceService:PromptGamePassPurchase(player, pass.gamePassId)
+			end
+		end)
+	end
+	for _, product in Monetization.products do
+		storeOrder += 1
+		storeRow(storeOrder, `🛒 {product.displayName}`, product.robux, function()
+			if product.productId == 0 then
+				showToast("This product isn't published yet.")
+			else
+				MarketplaceService:PromptProductPurchase(player, product.productId)
+			end
+		end)
+	end
+
+	-- 🌐 Hub (§6) — visit other festivals, rate them, return home.
+	local hubPanel = makePanel("🌐 Festivals")
+	local hubList = create("ScrollingFrame", {
+		Position = UDim2.fromOffset(10, 40),
+		Size = UDim2.new(1, -20, 1, -86),
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		ScrollBarThickness = 4,
+		CanvasSize = UDim2.fromOffset(0, 0),
+		AutomaticCanvasSize = Enum.AutomaticSize.Y,
+	}, hubPanel) :: ScrollingFrame
+	create("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, hubList)
+
+	local returnHome = create("TextButton", {
+		AnchorPoint = Vector2.new(0.5, 1),
+		Position = UDim2.new(0.5, 0, 1, -10),
+		Size = UDim2.fromOffset(200, 34),
+		BackgroundColor3 = COLOR_GOLD,
+		BorderSizePixel = 0,
+		Font = Enum.Font.GothamBold,
+		TextSize = 15,
+		TextColor3 = COLOR_NAVY,
+		Text = "🏠 Return Home",
+	}, hubPanel) :: TextButton
+	create("UICorner", { CornerRadius = UDim.new(0, 8) }, returnHome)
+	returnHome.Activated:Connect(function()
+		Net.Client.Fire("RequestReturnHome")
+	end)
+
+	local function rebuildHub()
+		for _, child in hubList:GetChildren() do
+			if child:IsA("Frame") then
+				child:Destroy()
+			end
+		end
+		local container = Workspace:FindFirstChild("Plots")
+		if container == nil then
+			return
+		end
+		for _, plotModel in container:GetChildren() do
+			local ownerId = plotModel:GetAttribute("OwnerUserId")
+			local plotIndex = plotModel:GetAttribute("PlotIndex")
+			if type(ownerId) ~= "number" or type(plotIndex) ~= "number" or ownerId == player.UserId then
+				continue
+			end
+			local rating = plotModel:GetAttribute("Rating")
+			local stars = if type(rating) == "number" and rating > 0 then string.format(" • %.1f★", rating) else ""
+
+			local row = create("Frame", {
+				Size = UDim2.new(1, 0, 0, 52),
+				LayoutOrder = plotIndex,
+				BackgroundColor3 = Color3.fromRGB(20, 45, 85),
+				BorderSizePixel = 0,
+			}, hubList)
+			create("UICorner", { CornerRadius = UDim.new(0, 8) }, row)
+			create("TextLabel", {
+				Position = UDim2.fromOffset(8, 4),
+				Size = UDim2.new(1, -80, 0, 20),
+				BackgroundTransparency = 1,
+				Font = Enum.Font.GothamMedium,
+				TextSize = 13,
+				TextXAlignment = Enum.TextXAlignment.Left,
+				TextColor3 = COLOR_WHITE,
+				Text = `Festival #{plotIndex}{stars}`,
+			}, row)
+			local visitButton = create("TextButton", {
+				AnchorPoint = Vector2.new(1, 0),
+				Position = UDim2.new(1, -6, 0, 4),
+				Size = UDim2.fromOffset(64, 20),
+				BackgroundColor3 = COLOR_CYAN,
+				BorderSizePixel = 0,
+				Font = Enum.Font.GothamBold,
+				TextSize = 11,
+				TextColor3 = COLOR_NAVY,
+				Text = "Visit",
+			}, row) :: TextButton
+			create("UICorner", { CornerRadius = UDim.new(0, 6) }, visitButton)
+			visitButton.Activated:Connect(function()
+				Net.Client.Fire("RequestVisit", plotIndex)
+			end)
+
+			-- 1-5 star rating row (§6 — 1 vote/host/day, server-enforced).
+			for star = 1, 5 do
+				local starButton = create("TextButton", {
+					Position = UDim2.fromOffset(8 + (star - 1) * 30, 28),
+					Size = UDim2.fromOffset(26, 20),
+					BackgroundColor3 = COLOR_NAVY,
+					BorderSizePixel = 0,
+					Font = Enum.Font.GothamBold,
+					TextSize = 12,
+					TextColor3 = COLOR_GOLD,
+					Text = `{star}★`,
+				}, row) :: TextButton
+				create("UICorner", { CornerRadius = UDim.new(0, 4) }, starButton)
+				starButton.Activated:Connect(function()
+					Net.Client.Fire("RequestRate", ownerId, star)
+				end)
+			end
+		end
+	end
+	hubPanel:GetPropertyChangedSignal("Visible"):Connect(function()
+		if hubPanel.Visible then
+			rebuildHub()
+		end
+	end)
+
+	makeToggle("💎", 1, storePanel)
+	makeToggle("🌐", 2, hubPanel)
 end
 
 return UIController

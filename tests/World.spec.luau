@@ -72,11 +72,12 @@ return function()
 			expect(HypeService._clampModifier(7)).to.equal(7)
 		end)
 
-		it("composes equipment + modifier + staff, clamped to 0-100", function()
-			expect(HypeService._composeHype(50, 5, 0)).to.equal(55)
-			expect(HypeService._composeHype(40, 5, 8)).to.equal(53) -- §5.2 staff Hype
-			expect(HypeService._composeHype(0, -20, 0)).to.equal(0)
-			expect(HypeService._composeHype(120, 0, 0)).to.equal(100)
+		it("composes equipment + modifier + staff + boost, clamped to 0-100", function()
+			expect(HypeService._composeHype(50, 5, 0, 0)).to.equal(55)
+			expect(HypeService._composeHype(40, 5, 8, 0)).to.equal(53) -- §5.2 staff Hype
+			expect(HypeService._composeHype(30, 0, 0, 20)).to.equal(50) -- §8.2 Hype Boost
+			expect(HypeService._composeHype(0, -20, 0, 0)).to.equal(0)
+			expect(HypeService._composeHype(120, 0, 0, 0)).to.equal(100)
 		end)
 
 		it("sums the Hype of non-broken equipment only (§4)", function()

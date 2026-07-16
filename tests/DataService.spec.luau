@@ -30,10 +30,10 @@ return function()
 		DataService.Init({ profileStore = MockProfileStore, storeName = "TestPlayerData" })
 	end)
 
-	describe("TEMPLATE (défauts du schéma v2 — §10.4)", function()
+	describe("TEMPLATE (défauts du schéma v3 — §10.4)", function()
 		it("carries every field with its default", function()
 			local template = DataService.TEMPLATE
-			expect(template.dataVersion).to.equal(2)
+			expect(template.dataVersion).to.equal(3)
 			-- §3.2 amendment (Sprint 1): starting balance enables the D0 hook.
 			expect(template.shells).to.equal(Economy.STARTING_SHELLS)
 			expect(template.moonShards).to.equal(0)
@@ -48,6 +48,11 @@ return function()
 			-- §4 (schema v2) — Zone 1 unlocked from the start.
 			expect(type(template.unlockedZones)).to.equal("table")
 			expect(template.unlockedZones["1"]).to.equal(true)
+			-- §8.4.3 / §6 (schema v3) — monetization + social defaults.
+			expect(type(template.purchaseHistory)).to.equal("table")
+			expect(template.festivalRating.sum).to.equal(0)
+			expect(template.festivalRating.count).to.equal(0)
+			expect(template.social.questClaimed).to.equal(false)
 			expect(template.lastSeen).to.equal(0)
 		end)
 
@@ -165,9 +170,12 @@ return function()
 			expect(data.moonShards).to.equal(0) -- missing keys filled in
 			expect(data.stats.visits).to.equal(0)
 			expect(type(data.passes)).to.equal("table")
-			-- §4 — the v1→v2 migration unlocks Zone 1 and stamps the version.
-			expect(data.dataVersion).to.equal(2)
+			-- §4/§6/§8 — v1→v2→v3 migrations unlock Zone 1, add the monetization
+			-- ledger + social state, and stamp the version.
+			expect(data.dataVersion).to.equal(3)
 			expect(data.unlockedZones["1"]).to.equal(true)
+			expect(type(data.purchaseHistory)).to.equal("table")
+			expect(type(data.social)).to.equal("table")
 
 			DataService.Release(player)
 		end)
