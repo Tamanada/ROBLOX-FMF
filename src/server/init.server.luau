@@ -89,4 +89,4 @@ game:BindToClose(function()
 	DataService.ReleaseAll()
 end)
 
-print("[FMF] Sprint 5 server ready — social + monetization (visits, ratings, passes, ProcessReceipt).")
+print("[FMF] Sprint 6 server ready — launch build (Zone 3, prestige, leaderboard, onboarding).")

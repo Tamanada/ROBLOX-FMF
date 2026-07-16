@@ -125,6 +125,16 @@ function EconomyService.GetShells(player: Player): number?
 	return if data ~= nil then data.shells else nil
 end
 
+-- §2.3 — after a direct balance change (e.g. Prestige reset), refresh the
+-- display from the profile.
+function EconomyService.RefreshDisplay(player: Player)
+	local data = DataService.Get(player)
+	if data ~= nil then
+		updateDisplay(player, data)
+		updateStat(player, "MoonShards", data.moonShards)
+	end
+end
+
 function EconomyService.GetMoonShards(player: Player): number?
 	local data = DataService.Get(player)
 	return if data ~= nil then data.moonShards else nil

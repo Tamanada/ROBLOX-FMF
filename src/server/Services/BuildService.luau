@@ -286,14 +286,74 @@ local function onRequestUnlockZone(player: Player, zone: number)
 		notify(player, `Reach Hype {req.hype} to unlock Zone {zone}.`)
 		return
 	end
+
+	-- §4 — Zone 3 also requires prestige OR paying Moon Shards. Resolve the
+	-- alternative BEFORE debiting Shells so a failure leaves the balance intact.
+	local payShards = false
+	if req.requiresPrestige > 0 and data.prestigeCount < req.requiresPrestige then
+		if data.moonShards >= req.altMoonShards then
+			payShards = true
+		else
+			notify(player, `Zone {zone} needs a prestige, or {req.altMoonShards} 🌕.`)
+			return
+		end
+	end
+
 	if not EconomyService.Debit(player, req.shells, "unlock:" .. zoneKey) then
 		notify(player, `Zone {zone} costs {req.shells} 🐚.`)
 		return
+	end
+	if payShards then
+		EconomyService.DebitMoonShards(player, req.altMoonShards, "unlock:" .. zoneKey)
 	end
 
 	data.unlockedZones[zoneKey] = true
 	setMaxZoneAttribute(player, data)
 	notify(player, `Zone {zone} unlocked — new festival grounds! 🌴`)
+end
+
+-- §2.3 — permanent Prestige revenue multiplier, capped.
+function BuildService._prestigeMultiplier(prestigeCount: number): number
+	return math.min(1 + prestigeCount * Economy.PRESTIGE_MULTIPLIER_PER, Economy.PRESTIGE_MULTIPLIER_CAP)
+end
+
+local function applyPrestige(player: Player, data: Types.PlayerData)
+	BuildService.SetExternalMultiplier(player, data, "prestige", BuildService._prestigeMultiplier(data.prestigeCount))
+	player:SetAttribute("PrestigeCount", data.prestigeCount)
+end
+
+-- §2.3 — Season Reset: at the last beach, immortalise the festival for a
+-- permanent multiplier, then restart from Zone 1 with the bonus. Keeps staff,
+-- Moon Shards, passes, rating, prestige count; resets Shells + equipment + zones.
+local function onRequestPrestige(player: Player)
+	local data = DataService.Get(player)
+	if data == nil then
+		return
+	end
+	if data.unlockedZones[tostring(Economy.PRESTIGE_REQUIRED_ZONE)] ~= true then
+		notify(player, "Reach Bottle Beach (Zone 3) before you can prestige.")
+		return
+	end
+
+	data.prestigeCount += 1
+	data.shells = Economy.STARTING_SHELLS
+	data.unlockedZones = { ["1"] = true }
+	data.plots[Economy.MAIN_PLOT_SLOT] = {
+		equipment = {
+			{ id = "campfire", level = 1, cframe = Serde.serializeCFrame(CFrame.new(0, 3, 0)), broken = false },
+		},
+	}
+
+	applyPrestige(player, data)
+	EconomyService.RefreshDisplay(player)
+	HypeService.Recompute(player, data)
+	refreshRate(player, data)
+	PlotService.RefreshEquipment(player, data)
+	setMaxZoneAttribute(player, data)
+	DataService.SaveNow(player)
+
+	local bonus = math.floor((BuildService._prestigeMultiplier(data.prestigeCount) - 1) * 100 + 0.5)
+	notify(player, `🌟 Season Reset! Prestige {data.prestigeCount} — permanent +{bonus}% revenue!`)
 end
 
 local function onRequestCollect(player: Player)
@@ -432,6 +492,7 @@ function BuildService.Init()
 	Net.Server.Handle("RequestUpgrade", { isArrayIndex }, onRequestUpgrade)
 	Net.Server.Handle("RequestRepair", { isArrayIndex }, onRequestRepair)
 	Net.Server.Handle("RequestUnlockZone", { isArrayIndex }, onRequestUnlockZone)
+	Net.Server.Handle("RequestPrestige", {}, onRequestPrestige)
 	Net.Server.Handle("RequestCollect", {}, onRequestCollect)
 
 	-- §7 — EventService pushes storm damage / monkey theft here (no back-require).
@@ -505,7 +566,7 @@ function BuildService.TrackPlayer(player: Player, data: Types.PlayerData)
 	end
 
 	runtime[player] = { uncollected = 0, ratePerMinute = 0, multipliers = {}, autoCollect = false }
-	refreshRate(player, data)
+	applyPrestige(player, data) -- §2.3 — permanent prestige multiplier (refreshes rate)
 	setMaxZoneAttribute(player, data) -- §4 — client shows unlocked zones
 end
 
