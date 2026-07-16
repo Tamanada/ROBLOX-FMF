@@ -5,6 +5,10 @@
 
 export type SerializedCFrame = { number }
 
+-- §2.2 — the two phases of the 16-minute day/night cycle. Replicated to
+-- clients as a Workspace attribute so ambiance (§9) tracks the server clock.
+export type CyclePhase = "Day" | "Night"
+
 export type EquipmentInstance = {
 	id: string,
 	level: number,
