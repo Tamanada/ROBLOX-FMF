@@ -22,9 +22,10 @@ DataService.AUTOSAVE_INTERVAL_SECONDS = Economy.AUTOSAVE_INTERVAL_SECONDS
 
 -- Schéma joueur v1 (§10.4). ProfileStore deep-copies this template per
 -- profile and Reconcile() fills any missing keys on old saves.
+-- Starting balance: §3.2 amendment (Sprint 1) — enables the D0 hook.
 local TEMPLATE: Types.PlayerData = {
 	dataVersion = 1,
-	shells = 0,
+	shells = Economy.STARTING_SHELLS,
 	moonShards = 0,
 	hype = 0,
 	prestigeCount = 0,
@@ -88,6 +89,9 @@ end
 
 local playerStore: any = nil
 local profiles: { [Player]: any } = {}
+-- lastSeen value as it was in the SAVED data, captured before this session
+-- stamps it — the basis for offline earnings (§2.4).
+local previousLastSeen: { [Player]: number } = {}
 
 export type InitOptions = {
 	-- ProfileStore-compatible module (tests inject a mock here).
@@ -153,9 +157,16 @@ function DataService.LoadAsync(player: Player): any?
 	end
 
 	profiles[player] = profile
+	previousLastSeen[player] = profile.Data.lastSeen
 	profile.Data.lastSeen = os.time()
 	startAutosave(player, profile)
 	return profile
+end
+
+-- Returns the lastSeen timestamp from the loaded save (0 on first join),
+-- i.e. the offline-earnings basis — LoadAsync overwrites Data.lastSeen.
+function DataService.GetPreviousLastSeen(player: Player): number?
+	return previousLastSeen[player]
 end
 
 function DataService.Get(player: Player): Types.PlayerData?
@@ -176,6 +187,7 @@ end
 -- the session lock.
 function DataService.Release(player: Player)
 	local profile = profiles[player]
+	previousLastSeen[player] = nil
 	if profile ~= nil then
 		profiles[player] = nil
 		profile.Data.lastSeen = os.time()
@@ -194,6 +206,9 @@ end
 function DataService._resetForTests()
 	for player in profiles do
 		profiles[player] = nil
+	end
+	for player in previousLastSeen do
+		previousLastSeen[player] = nil
 	end
 	playerStore = nil
 end

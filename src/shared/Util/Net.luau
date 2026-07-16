@@ -180,6 +180,16 @@ function Server.Callback(name: string, spec: Spec, handler: (player: Player, ...
 	end
 end
 
+-- Declares a server->client RemoteEvent with no incoming handler (pushes
+-- like "Notify"). Idempotent.
+function Server.Declare(name: string)
+	assert(RunService:IsServer(), "[Net] Net.Server is server-only")
+	local folder = serverRemotesFolder()
+	if folder:FindFirstChild("RE_" .. name) == nil then
+		createRemote("RemoteEvent", "RE_" .. name)
+	end
+end
+
 function Server.Fire(name: string, player: Player, ...: any)
 	local remote = serverRemotesFolder():FindFirstChild("RE_" .. name)
 	assert(remote ~= nil and remote:IsA("RemoteEvent"), `[Net] unknown remote "{name}"`)
