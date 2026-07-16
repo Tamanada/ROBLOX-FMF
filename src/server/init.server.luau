@@ -1,9 +1,9 @@
 --!strict
--- server/init.server.luau — Sprint 2 bootstrap.
--- Core loop (§2.1): join → plot → campfire → buy/upgrade → revenue accrues
--- → collect → reinvest, now inside the living world (§2.2 day/night cycle,
--- §7 beach cleanup, NPC crowd). Remaining services stay stubs until their
--- sprint (§12).
+-- server/init.server.luau — Sprint 4 bootstrap.
+-- Core loop (§2.1) inside the living world (§2.2 cycle, §7 cleanup/events, NPC
+-- crowd), the Full Moon (§2.3), and now depth: staff collection/fusion (§5),
+-- repair/breakage + storms/monkeys/VIP (§4/§7), and Zone 2 (§4).
+-- SocialService / MonetizationService stay stubs until S5 (§12).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -17,16 +17,18 @@ local EventService = require(script.Services.EventService)
 local FullMoonService = require(script.Services.FullMoonService)
 local NPCService = require(script.Services.NPCService)
 local BuildService = require(script.Services.BuildService)
+local StaffService = require(script.Services.StaffService)
 
 Net.Server.Start()
 DataService.Init()
 PlotService.Init()
 EconomyService.Init()
 HypeService.Init()
-EventService.Init() -- §2.2 day/night cycle + §7 cleanup — the world heartbeat
+EventService.Init() -- §2.2 day/night cycle + §7 cleanup/events — world heartbeat
 FullMoonService.Init() -- §2.3 global UTC Full Moon clock + multipliers
 NPCService.Init() -- §2.1 living crowd
 BuildService.Init()
+StaffService.Init() -- §5 recruitment/fusion; wires the Full Moon staff gate
 
 local function onPlayerAdded(player: Player)
 	local profile = DataService.LoadAsync(player)
@@ -46,6 +48,8 @@ local function onPlayerAdded(player: Player)
 	end
 	EconomyService.SetupPlayer(player, data)
 	BuildService.TrackPlayer(player, data)
+	-- §5 — apply assigned-staff effects (after BuildService runtime exists).
+	StaffService.TrackPlayer(player, data)
 	-- §2.2/§7 — enrol in the cycle's cleanup flashes; §2.1 — start the crowd;
 	-- §2.3 — count toward Full Moon attendance/rewards.
 	EventService.TrackPlayer(player)
@@ -75,4 +79,4 @@ game:BindToClose(function()
 	DataService.ReleaseAll()
 end)
 
-print("[FMF] Sprint 3 server ready — Full Moon online (UTC-synced ×5, Moon Shards, sky transform).")
+print("[FMF] Sprint 4 server ready — depth online (staff, fusion, repair, storms, Zone 2).")

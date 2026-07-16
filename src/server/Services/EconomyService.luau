@@ -150,6 +150,27 @@ function EconomyService.CreditMoonShards(player: Player, amount: number, reason:
 	return true
 end
 
+-- §3.1 — spend earned Moon Shards (staff Premium rolls, cosmetics). Earn-only
+-- refers to Robux (never bought); spending in-game is intended.
+function EconomyService.DebitMoonShards(player: Player, amount: number, reason: string): boolean
+	if not isValidAmount(amount) then
+		warn(`[EconomyService] invalid moon shard debit ({tostring(amount)}) for {player.Name} [{reason}]`)
+		return false
+	end
+
+	local data = DataService.Get(player)
+	if data == nil then
+		return false
+	end
+	if data.moonShards < amount then
+		return false
+	end
+
+	data.moonShards -= amount
+	updateStat(player, "MoonShards", data.moonShards)
+	return true
+end
+
 function EconomyService.Credit(player: Player, amount: number, reason: string): boolean
 	if not isValidAmount(amount) then
 		warn(`[EconomyService] invalid credit amount ({tostring(amount)}) for {player.Name} [{reason}]`)

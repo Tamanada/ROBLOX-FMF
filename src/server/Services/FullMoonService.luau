@@ -95,10 +95,15 @@ local function allEquipmentRepaired(data: Types.PlayerData): boolean
 	return true
 end
 
--- §2.3 — staff-per-zone predicate. Stubbed satisfied until StaffService (S4);
--- swap this for the real check there (Blueprint §2.3 amendment).
-local function hasStaffPerZone(_data: Types.PlayerData): boolean
+-- §2.3 — staff-per-zone predicate, injected by StaffService (S4) so the gate
+-- doesn't require StaffService (which requires FullMoonService). Defaults
+-- satisfied until wired (Blueprint §2.3 amendment).
+local staffPredicate: (player: Player) -> boolean = function()
 	return true
+end
+
+function FullMoonService.SetStaffPredicate(predicate: (player: Player) -> boolean)
+	staffPredicate = predicate
 end
 
 local function isEligible(player: Player): boolean
@@ -106,7 +111,7 @@ local function isEligible(player: Player): boolean
 	if data == nil then
 		return false
 	end
-	return data.hype >= Economy.FULL_MOON_HYPE_THRESHOLD and allEquipmentRepaired(data) and hasStaffPerZone(data)
+	return data.hype >= Economy.FULL_MOON_HYPE_THRESHOLD and allEquipmentRepaired(data) and staffPredicate(player)
 end
 
 --------------------------------------------------------------------------

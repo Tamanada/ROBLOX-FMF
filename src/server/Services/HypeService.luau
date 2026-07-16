@@ -22,6 +22,8 @@ local HypeService = {}
 
 -- Per-player cleanliness/decay accumulator (default 0). Cleared on leave.
 local modifiers: { [Player]: number } = {}
+-- §5.2 — per-player Hype from assigned staff (pushed by StaffService, S4).
+local staffHype: { [Player]: number } = {}
 
 --------------------------------------------------------------------------
 -- Pure helpers (unit-tested in tests/World.spec.luau)
@@ -32,9 +34,9 @@ function HypeService._clampModifier(value: number): number
 	return math.clamp(value, Economy.HYPE_MODIFIER_MIN, Economy.HYPE_MODIFIER_MAX)
 end
 
--- §3.3 — final Hype from its components.
-function HypeService._composeHype(equipmentBonus: number, modifier: number): number
-	return math.clamp(equipmentBonus + modifier, 0, 100)
+-- §3.3 — final Hype from its components (equipment + cleanliness/decay + staff).
+function HypeService._composeHype(equipmentBonus: number, modifier: number, staff: number): number
+	return math.clamp(equipmentBonus + modifier + staff, 0, 100)
 end
 
 -- Σ hype of non-broken equipment (broken equipment contributes 0 — §4).
@@ -62,6 +64,7 @@ function HypeService.Init() end
 
 function HypeService.CleanupPlayer(player: Player)
 	modifiers[player] = nil
+	staffHype[player] = nil
 end
 
 --------------------------------------------------------------------------
@@ -71,10 +74,19 @@ end
 -- Recomputes the festival's Hype from equipment + the runtime modifier and
 -- writes it to the profile + the replicated attribute. Returns the new score.
 function HypeService.Recompute(player: Player, data: Types.PlayerData): number
-	local hype = HypeService._composeHype(HypeService._equipmentBonus(data), modifiers[player] or 0)
+	local hype =
+		HypeService._composeHype(HypeService._equipmentBonus(data), modifiers[player] or 0, staffHype[player] or 0)
 	data.hype = hype
 	player:SetAttribute("Hype", hype)
 	return hype
+end
+
+-- §5.2 — StaffService pushes the summed Hype of assigned staff here, then this
+-- recomputes. Kept separate from the equipment sum so staff can be re-derived
+-- without touching the base.
+function HypeService.SetStaffHype(player: Player, data: Types.PlayerData, bonus: number)
+	staffHype[player] = bonus
+	HypeService.Recompute(player, data)
 end
 
 -- §7 — Beach Cleanup Flash success: bump the cleanliness modifier by +bonus

@@ -52,6 +52,14 @@ local currentPhase: Types.CyclePhase = "Day"
 local startClock = 0
 local started = false
 
+-- §7 live events. Handlers are pushed IN by BuildService (equipment damage /
+-- Shells theft) so EventService never requires it back — no cycles.
+local rng = Random.new()
+local damageHandler: ((player: Player, count: number) -> ())? = nil
+local stealHandler: ((player: Player, fraction: number) -> ())? = nil
+local stormActiveUntil = 0 -- os.clock() timeline
+local vipActiveUntil = 0
+
 --------------------------------------------------------------------------
 -- Pure helpers (unit-tested in tests/World.spec.luau)
 --------------------------------------------------------------------------
@@ -103,6 +111,29 @@ end
 -- BuildService multiplies its accrual by this each tick (§2.2 night ×2).
 function EventService.GetRevenueMultiplier(): number
 	return EventService._revenueMultiplierFor(currentPhase)
+end
+
+-- §7 — server-wide temporary event multiplier: storm halves revenue, a VIP
+-- boat boosts it. BuildService stacks this on the phase/Full Moon multipliers.
+function EventService.GetEventRevenueMultiplier(): number
+	local now = os.clock()
+	local multiplier = 1
+	if now < stormActiveUntil then
+		multiplier *= Economy.STORM_REVENUE_MULTIPLIER
+	end
+	if now < vipActiveUntil then
+		multiplier *= Economy.VIP_REVENUE_MULTIPLIER
+	end
+	return multiplier
+end
+
+-- §7 — BuildService injects the equipment-damage / Shells-theft handlers.
+function EventService.SetDamageHandler(handler: (player: Player, count: number) -> ())
+	damageHandler = handler
+end
+
+function EventService.SetStealHandler(handler: (player: Player, fraction: number) -> ())
+	stealHandler = handler
 end
 
 --------------------------------------------------------------------------
@@ -260,6 +291,10 @@ local function onDayEnded()
 		if cleanup ~= nil and cleanup.active then
 			closeCleanup(player)
 		end
+		-- §4 — ambient wear: a small chance one equipment breaks each cycle.
+		if damageHandler ~= nil and rng:NextNumber() < Economy.AMBIENT_BREAK_CHANCE then
+			damageHandler(player, 1)
+		end
 	end
 end
 
@@ -275,6 +310,83 @@ local function applyPhase(secondsIntoCycle: number)
 	Workspace:SetAttribute(ATTR_IS_NIGHT, isNight)
 	local remaining = EventService._phaseRemaining(secondsIntoCycle)
 	Workspace:SetAttribute(ATTR_PHASE_ENDS_AT, os.time() + math.floor(remaining + 0.5))
+end
+
+--------------------------------------------------------------------------
+-- Live events (§7 — tempête, singes, VIP)
+--------------------------------------------------------------------------
+
+-- Next trigger time with ±50 % jitter around the average interval.
+local function scheduleNext(intervalSeconds: number): number
+	return os.clock() + intervalSeconds * (0.5 + rng:NextNumber())
+end
+
+-- §7 — Tropical storm: 60 s warning, then 1-3 equipment damaged per festival
+-- and revenue −50 % for 90 s.
+local function triggerStorm()
+	Net.Server.FireAll("Notify", "⛈️ Storm warning — a tropical storm rolls in within 60s!")
+	task.delay(Economy.STORM_WARNING_SECONDS, function()
+		stormActiveUntil = os.clock() + Economy.STORM_DURATION_SECONDS
+		Net.Server.FireAll("Notify", "⛈️ The storm hits — revenue halved, equipment at risk!")
+		if damageHandler ~= nil then
+			for player in tracked do
+				damageHandler(player, rng:NextInteger(Economy.STORM_MIN_DAMAGE, Economy.STORM_MAX_DAMAGE))
+			end
+		end
+	end)
+end
+
+-- §7 — Robber monkeys steal from every festival's uncollected pool.
+local function triggerMonkeys()
+	Net.Server.FireAll("Notify", "🐒 Robber monkeys raid the beach — collect your Shells!")
+	if stealHandler ~= nil then
+		for player in tracked do
+			stealHandler(player, Economy.MONKEY_STEAL_FRACTION)
+		end
+	end
+end
+
+-- §7 — VIP boat arrives only if the server's festival is hot (Hype ≥ 50).
+local function serverMeetsVIP(): boolean
+	for player in tracked do
+		local data = DataService.Get(player)
+		if data ~= nil and data.hype >= Economy.VIP_HYPE_REQUIREMENT then
+			return true
+		end
+	end
+	return false
+end
+
+local function triggerVIP()
+	vipActiveUntil = os.clock() + Economy.VIP_DURATION_SECONDS
+	Net.Server.FireAll("Notify", "🛥️ A VIP boat docks — big spenders for the next minute!")
+end
+
+local function startEventScheduler()
+	local stormAt = scheduleNext(Economy.STORM_INTERVAL_SECONDS)
+	local monkeyAt = scheduleNext(Economy.MONKEY_INTERVAL_SECONDS)
+	local vipAt = scheduleNext(Economy.VIP_INTERVAL_SECONDS)
+
+	task.spawn(function()
+		while true do
+			task.wait(1)
+			local now = os.clock()
+			if now >= stormAt then
+				triggerStorm()
+				stormAt = scheduleNext(Economy.STORM_INTERVAL_SECONDS)
+			end
+			if now >= monkeyAt then
+				triggerMonkeys()
+				monkeyAt = scheduleNext(Economy.MONKEY_INTERVAL_SECONDS)
+			end
+			if now >= vipAt then
+				if serverMeetsVIP() then
+					triggerVIP()
+				end
+				vipAt = scheduleNext(Economy.VIP_INTERVAL_SECONDS)
+			end
+		end
+	end)
 end
 
 --------------------------------------------------------------------------
@@ -297,6 +409,9 @@ function EventService.Init()
 	startClock = os.clock()
 	-- §2.2 — start in Day (construction / preparation first): secondsIntoCycle 0.
 	applyPhase(0)
+
+	-- §7 — schedule the tropical storm / monkeys / VIP boat.
+	startEventScheduler()
 
 	-- Cycle driver: 1 s granularity is ample for a 16-minute cycle.
 	task.spawn(function()

@@ -32,6 +32,7 @@ local BuildService = {}
 type Runtime = {
 	uncollected: number,
 	ratePerMinute: number,
+	staffMultiplier: number,
 }
 
 local runtime: { [Player]: Runtime } = {}
@@ -96,8 +97,21 @@ local function refreshRate(player: Player, data: Types.PlayerData)
 	if playerRuntime == nil then
 		return
 	end
-	playerRuntime.ratePerMinute = BuildService._computeRatePerMinute(data)
+	-- §5.2 — assigned staff scale the whole plot rate (multiplier pushed by
+	-- StaffService). The base rate stays the pure §4 computation.
+	playerRuntime.ratePerMinute = BuildService._computeRatePerMinute(data) * playerRuntime.staffMultiplier
 	EconomyService.SetTheoreticalRate(player, playerRuntime.ratePerMinute)
+end
+
+local function setMaxZoneAttribute(player: Player, data: Types.PlayerData)
+	local maxZone = 1
+	for zoneKey, unlocked in data.unlockedZones do
+		local n = tonumber(zoneKey)
+		if unlocked and n ~= nil and n > maxZone then
+			maxZone = n
+		end
+	end
+	player:SetAttribute("MaxUnlockedZone", maxZone)
 end
 
 local function getEquipment(player: Player): (Types.PlayerData?, { Types.EquipmentInstance }?)
@@ -127,15 +141,17 @@ local function onRequestBuy(player: Player, equipmentId: string, worldCFrame: CF
 		notify(player, "This one is a gift — already yours!")
 		return
 	end
-	if def.zone ~= 1 then
-		-- Zone 2 unlocks in Sprint 4, Zone 3 in Sprint 6 (§4).
-		notify(player, "This zone is not unlocked yet.")
-		return
-	end
 
 	local data, equipment = getEquipment(player)
 	local origin = PlotService.GetPlotOrigin(player)
 	if data == nil or equipment == nil or origin == nil then
+		return
+	end
+
+	-- §4 — the equipment's zone must be unlocked (Zone 1 always, Zone 2 via
+	-- RequestUnlockZone, Zone 3 in S6).
+	if data.unlockedZones[tostring(def.zone)] ~= true then
+		notify(player, "This zone is not unlocked yet.")
 		return
 	end
 
@@ -234,6 +250,41 @@ local function onRequestRepair(player: Player, index: number)
 	notify(player, `{def.displayName} repaired! 🔧`)
 end
 
+-- §4 — unlock the next zone (one-time Shells cost + Hype requirement).
+local function onRequestUnlockZone(player: Player, zone: number)
+	local data = DataService.Get(player)
+	if data == nil then
+		return
+	end
+	local zoneKey = tostring(zone)
+	if data.unlockedZones[zoneKey] == true then
+		notify(player, "That zone is already unlocked.")
+		return
+	end
+	local req = Economy.ZONE_UNLOCKS[zone]
+	if req == nil then
+		notify(player, "That zone cannot be unlocked yet.")
+		return
+	end
+	-- Sequential unlocks: the previous zone must already be open.
+	if data.unlockedZones[tostring(zone - 1)] ~= true then
+		notify(player, "Unlock the previous zone first.")
+		return
+	end
+	if data.hype < req.hype then
+		notify(player, `Reach Hype {req.hype} to unlock Zone {zone}.`)
+		return
+	end
+	if not EconomyService.Debit(player, req.shells, "unlock:" .. zoneKey) then
+		notify(player, `Zone {zone} costs {req.shells} 🐚.`)
+		return
+	end
+
+	data.unlockedZones[zoneKey] = true
+	setMaxZoneAttribute(player, data)
+	notify(player, `Zone {zone} unlocked — new festival grounds! 🌴`)
+end
+
 local function onRequestCollect(player: Player)
 	local playerRuntime = runtime[player]
 	if playerRuntime == nil then
@@ -253,6 +304,74 @@ local function onRequestCollect(player: Player)
 end
 
 --------------------------------------------------------------------------
+-- Cross-service hooks (§5.2 staff, §7 storm/monkeys) — pushed IN so this
+-- service never has to require StaffService/EventService back (no cycles).
+--------------------------------------------------------------------------
+
+-- §5.2 — StaffService pushes the assigned-staff revenue multiplier.
+function BuildService.SetStaffMultiplier(player: Player, data: Types.PlayerData, multiplier: number)
+	local playerRuntime = runtime[player]
+	if playerRuntime == nil then
+		return
+	end
+	playerRuntime.staffMultiplier = multiplier
+	refreshRate(player, data)
+end
+
+-- §4 / §7 — break up to `count` working (non-gift) equipment at random. Broken
+-- equipment earns 0 and drags Hype until repaired (existing RequestRepair).
+function BuildService.DamageRandomEquipment(player: Player, count: number)
+	local data, equipment = getEquipment(player)
+	if data == nil or equipment == nil then
+		return
+	end
+
+	local working: { number } = {}
+	for index, entry in equipment do
+		if not entry.broken then
+			local def = Equipment.byId[entry.id]
+			if def ~= nil and def.cost > 0 then
+				table.insert(working, index)
+			end
+		end
+	end
+
+	local broke = 0
+	for _ = 1, count do
+		if #working == 0 then
+			break
+		end
+		local pick = math.random(1, #working)
+		equipment[working[pick]].broken = true
+		table.remove(working, pick)
+		broke += 1
+	end
+
+	if broke > 0 then
+		HypeService.Recompute(player, data)
+		refreshRate(player, data)
+		PlotService.RefreshEquipment(player, data)
+		notify(player, `⛈️ {broke} equipment damaged — repair to restore revenue!`)
+	end
+end
+
+-- §7 — monkeys steal a fraction of the UNCOLLECTED pool (banked Shells are
+-- safe): urgency to collect.
+function BuildService.StealUncollected(player: Player, fraction: number)
+	local playerRuntime = runtime[player]
+	if playerRuntime == nil then
+		return
+	end
+	local stolen = math.floor(playerRuntime.uncollected * fraction)
+	if stolen <= 0 then
+		return
+	end
+	playerRuntime.uncollected -= stolen
+	PlotService.SetPlotAttribute(player, "Uncollected", math.floor(playerRuntime.uncollected))
+	notify(player, `🐒 Monkeys stole {stolen} 🐚 you hadn't collected!`)
+end
+
+--------------------------------------------------------------------------
 -- Lifecycle
 --------------------------------------------------------------------------
 
@@ -266,7 +385,12 @@ function BuildService.Init()
 	Net.Server.Handle("RequestBuy", { "string", "CFrame" }, onRequestBuy)
 	Net.Server.Handle("RequestUpgrade", { isArrayIndex }, onRequestUpgrade)
 	Net.Server.Handle("RequestRepair", { isArrayIndex }, onRequestRepair)
+	Net.Server.Handle("RequestUnlockZone", { isArrayIndex }, onRequestUnlockZone)
 	Net.Server.Handle("RequestCollect", {}, onRequestCollect)
+
+	-- §7 — EventService pushes storm damage / monkey theft here (no back-require).
+	EventService.SetDamageHandler(BuildService.DamageRandomEquipment)
+	EventService.SetStealHandler(BuildService.StealUncollected)
 
 	-- Revenue accrual loop (§2.1.2) — server holds the amounts (§10.3.4);
 	-- the plot attribute is display-only replication.
@@ -275,13 +399,15 @@ function BuildService.Init()
 			task.wait(Economy.REVENUE_TICK_SECONDS)
 			-- §2.2 — day pays ½ the night rate, so night is ×2. The catalogue
 			-- rates are night rates; the phase multiplier scales them. §2.3 —
-			-- the per-player Full Moon multiplier (×5/×2) stacks on top.
+			-- the per-player Full Moon multiplier (×5/×2) stacks on top; §7 —
+			-- the server-wide event multiplier (storm ×0.5, VIP ×1.5) too.
 			local phaseMultiplier = EventService.GetRevenueMultiplier()
+			local eventMultiplier = EventService.GetEventRevenueMultiplier()
 			for player, playerRuntime in runtime do
 				if playerRuntime.ratePerMinute > 0 then
 					local fullMoon = FullMoonService.GetRevenueMultiplier(player)
 					local tickShare = Economy.REVENUE_TICK_SECONDS / 60
-					playerRuntime.uncollected += playerRuntime.ratePerMinute * tickShare * phaseMultiplier * fullMoon
+					playerRuntime.uncollected += playerRuntime.ratePerMinute * tickShare * phaseMultiplier * fullMoon * eventMultiplier
 					PlotService.SetPlotAttribute(player, "Uncollected", math.floor(playerRuntime.uncollected))
 				end
 			end
@@ -323,8 +449,9 @@ function BuildService.TrackPlayer(player: Player, data: Types.PlayerData)
 		end
 	end
 
-	runtime[player] = { uncollected = 0, ratePerMinute = 0 }
+	runtime[player] = { uncollected = 0, ratePerMinute = 0, staffMultiplier = 1 }
 	refreshRate(player, data)
+	setMaxZoneAttribute(player, data) -- §4 — client shows unlocked zones
 end
 
 function BuildService.UntrackPlayer(player: Player)

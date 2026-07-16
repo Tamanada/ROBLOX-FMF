@@ -17,14 +17,14 @@ local Economy = require(ReplicatedStorage.Shared.Config.Economy)
 local DataService = {}
 
 -- Bump this when adding a migration below.
-DataService.DATA_VERSION = 1
+DataService.DATA_VERSION = 2
 DataService.AUTOSAVE_INTERVAL_SECONDS = Economy.AUTOSAVE_INTERVAL_SECONDS
 
 -- Schéma joueur v1 (§10.4). ProfileStore deep-copies this template per
 -- profile and Reconcile() fills any missing keys on old saves.
 -- Starting balance: §3.2 amendment (Sprint 1) — enables the D0 hook.
 local TEMPLATE: Types.PlayerData = {
-	dataVersion = 1,
+	dataVersion = 2,
 	shells = Economy.STARTING_SHELLS,
 	moonShards = 0,
 	hype = 0,
@@ -37,6 +37,8 @@ local TEMPLATE: Types.PlayerData = {
 		visits = 0,
 	},
 	passes = {},
+	-- §4 — Zone 1 (Haad Rin) is unlocked from the start.
+	unlockedZones = { ["1"] = true },
 	lastSeen = 0,
 }
 
@@ -49,11 +51,14 @@ DataService.TEMPLATE = TEMPLATE
 -- MIGRATIONS[n] upgrades a profile from dataVersion n-1 to n, mutating
 -- `data` in place. Applied in order by Migrate() after Reconcile().
 --
--- Stub example for the day v2 ships:
---   MIGRATIONS[2] = function(data)
---       data.newField = defaultValue
---   end
-local MIGRATIONS: { [number]: (data: any) -> () } = {}
+-- v2 (Sprint 4) — introduce unlockedZones; Zone 1 is unlocked for everyone.
+local MIGRATIONS: { [number]: (data: any) -> () } = {
+	[2] = function(data)
+		if data.unlockedZones == nil then
+			data.unlockedZones = { ["1"] = true }
+		end
+	end,
+}
 
 -- Pure engine, exposed for tests: upgrades `data` step by step until
 -- `targetVersion`, erroring loudly if a step is missing (a hole in the
