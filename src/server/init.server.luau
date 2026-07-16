@@ -18,6 +18,8 @@ local FullMoonService = require(script.Services.FullMoonService)
 local NPCService = require(script.Services.NPCService)
 local BuildService = require(script.Services.BuildService)
 local StaffService = require(script.Services.StaffService)
+local SocialService = require(script.Services.SocialService)
+local MonetizationService = require(script.Services.MonetizationService)
 
 Net.Server.Start()
 DataService.Init()
@@ -29,6 +31,8 @@ FullMoonService.Init() -- §2.3 global UTC Full Moon clock + multipliers
 NPCService.Init() -- §2.1 living crowd
 BuildService.Init()
 StaffService.Init() -- §5 recruitment/fusion; wires the Full Moon staff gate
+SocialService.Init() -- §6 visits, ratings, friend bonus
+MonetizationService.Init() -- §8 ProcessReceipt (idempotent) + Game Passes
 
 local function onPlayerAdded(player: Player)
 	local profile = DataService.LoadAsync(player)
@@ -48,8 +52,13 @@ local function onPlayerAdded(player: Player)
 	end
 	EconomyService.SetupPlayer(player, data)
 	BuildService.TrackPlayer(player, data)
+	-- §8 — re-apply owned Game Passes (before staff/social push their own
+	-- multipliers so all external multipliers coexist on the runtime).
+	MonetizationService.TrackPlayer(player, data)
 	-- §5 — apply assigned-staff effects (after BuildService runtime exists).
 	StaffService.TrackPlayer(player, data)
+	-- §6 — rating board attribute + friend bonus.
+	SocialService.TrackPlayer(player, data)
 	-- §2.2/§7 — enrol in the cycle's cleanup flashes; §2.1 — start the crowd;
 	-- §2.3 — count toward Full Moon attendance/rewards.
 	EventService.TrackPlayer(player)
@@ -66,6 +75,7 @@ Players.PlayerRemoving:Connect(function(player: Player)
 	-- Order matters: bank the uncollected pool into the profile BEFORE the
 	-- session is released and saved.
 	NPCService.UntrackPlayer(player)
+	SocialService.UntrackPlayer(player)
 	FullMoonService.UntrackPlayer(player)
 	EventService.UntrackPlayer(player)
 	BuildService.UntrackPlayer(player)
@@ -79,4 +89,4 @@ game:BindToClose(function()
 	DataService.ReleaseAll()
 end)
 
-print("[FMF] Sprint 4 server ready — depth online (staff, fusion, repair, storms, Zone 2).")
+print("[FMF] Sprint 5 server ready — social + monetization (visits, ratings, passes, ProcessReceipt).")

@@ -254,6 +254,29 @@ function PlotService.GetArrivalCFrame(player: Player): CFrame?
 	return plot.origin * CFrame.new(0, 1, PLOT_SIZE.Z / 2 - 2)
 end
 
+-- §6 — spawn CFrame of a plot by index (visitors teleport here).
+function PlotService.GetSpawnCFrame(plotIndex: number): CFrame?
+	local plot = plots[plotIndex]
+	return if plot ~= nil then plot.spawnPart.CFrame + Vector3.new(0, 3, 0) else nil
+end
+
+-- §6 — owner of a plot by index (nil if free).
+function PlotService.GetOwnerUserId(plotIndex: number): number?
+	local plot = plots[plotIndex]
+	return if plot ~= nil then plot.ownerUserId else nil
+end
+
+-- §6 — occupied plots for the hub board { index, ownerUserId }.
+function PlotService.GetOccupiedPlots(): { { index: number, ownerUserId: number } }
+	local occupied = {}
+	for _, plot in plots do
+		if plot.ownerUserId ~= nil then
+			table.insert(occupied, { index = plot.index, ownerUserId = plot.ownerUserId })
+		end
+	end
+	return occupied
+end
+
 -- World positions of the working (non-broken) equipment on the player's plot,
 -- so NPCService can route partygoers to them without reaching into internals.
 function PlotService.GetEquipmentPositions(player: Player): { Vector3 }

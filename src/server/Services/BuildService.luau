@@ -32,7 +32,10 @@ local BuildService = {}
 type Runtime = {
 	uncollected: number,
 	ratePerMinute: number,
-	staffMultiplier: number,
+	-- keyed revenue multipliers stacked on the base rate (§5.2 staff, §6 friend
+	-- bonus, §8.1 VIP pass). Product of all entries; empty ⇒ ×1.
+	multipliers: { [string]: number },
+	autoCollect: boolean, -- §8.1 Auto-Collect pass
 }
 
 local runtime: { [Player]: Runtime } = {}
@@ -92,14 +95,22 @@ local function notify(player: Player, message: string)
 	Net.Server.Fire("Notify", player, message)
 end
 
+local function multiplierProduct(playerRuntime: Runtime): number
+	local product = 1
+	for _, value in playerRuntime.multipliers do
+		product *= value
+	end
+	return product
+end
+
 local function refreshRate(player: Player, data: Types.PlayerData)
 	local playerRuntime = runtime[player]
 	if playerRuntime == nil then
 		return
 	end
-	-- §5.2 — assigned staff scale the whole plot rate (multiplier pushed by
-	-- StaffService). The base rate stays the pure §4 computation.
-	playerRuntime.ratePerMinute = BuildService._computeRatePerMinute(data) * playerRuntime.staffMultiplier
+	-- §5.2/§6/§8.1 — external multipliers (staff, friend bonus, VIP pass) scale
+	-- the whole plot rate. The base rate stays the pure §4 computation.
+	playerRuntime.ratePerMinute = BuildService._computeRatePerMinute(data) * multiplierProduct(playerRuntime)
 	EconomyService.SetTheoreticalRate(player, playerRuntime.ratePerMinute)
 end
 
@@ -308,14 +319,49 @@ end
 -- service never has to require StaffService/EventService back (no cycles).
 --------------------------------------------------------------------------
 
--- §5.2 — StaffService pushes the assigned-staff revenue multiplier.
-function BuildService.SetStaffMultiplier(player: Player, data: Types.PlayerData, multiplier: number)
+-- §5.2/§6/§8.1 — set a named revenue multiplier (key "staff" / "friend" /
+-- "vip" …). Pushed by StaffService, SocialService, MonetizationService.
+function BuildService.SetExternalMultiplier(player: Player, data: Types.PlayerData, key: string, value: number)
 	local playerRuntime = runtime[player]
 	if playerRuntime == nil then
 		return
 	end
-	playerRuntime.staffMultiplier = multiplier
+	playerRuntime.multipliers[key] = value
 	refreshRate(player, data)
+end
+
+-- §5.2 — thin wrapper kept for StaffService.
+function BuildService.SetStaffMultiplier(player: Player, data: Types.PlayerData, multiplier: number)
+	BuildService.SetExternalMultiplier(player, data, "staff", multiplier)
+end
+
+-- §8.1 — Auto-Collect pass: the accrual loop banks the pool automatically.
+function BuildService.SetAutoCollect(player: Player, enabled: boolean)
+	local playerRuntime = runtime[player]
+	if playerRuntime ~= nil then
+		playerRuntime.autoCollect = enabled
+	end
+end
+
+-- §8.2 — Instant Repair All product: repair every broken equipment for free.
+function BuildService.RepairAll(player: Player)
+	local data, equipment = getEquipment(player)
+	if data == nil or equipment == nil then
+		return
+	end
+	local repaired = 0
+	for _, entry in equipment do
+		if entry.broken then
+			entry.broken = false
+			repaired += 1
+		end
+	end
+	if repaired > 0 then
+		HypeService.Recompute(player, data)
+		refreshRate(player, data)
+		PlotService.RefreshEquipment(player, data)
+		notify(player, `🔧 All {repaired} equipment repaired!`)
+	end
 end
 
 -- §4 / §7 — break up to `count` working (non-gift) equipment at random. Broken
@@ -410,6 +456,15 @@ function BuildService.Init()
 					playerRuntime.uncollected += playerRuntime.ratePerMinute * tickShare * phaseMultiplier * fullMoon * eventMultiplier
 					PlotService.SetPlotAttribute(player, "Uncollected", math.floor(playerRuntime.uncollected))
 				end
+				-- §8.1 — Auto-Collect pass banks the pool each tick.
+				if playerRuntime.autoCollect then
+					local amount = math.floor(playerRuntime.uncollected)
+					if amount > 0 then
+						playerRuntime.uncollected -= amount
+						EconomyService.Credit(player, amount, "collect")
+						PlotService.SetPlotAttribute(player, "Uncollected", math.floor(playerRuntime.uncollected))
+					end
+				end
 			end
 		end
 	end)
@@ -449,7 +504,7 @@ function BuildService.TrackPlayer(player: Player, data: Types.PlayerData)
 		end
 	end
 
-	runtime[player] = { uncollected = 0, ratePerMinute = 0, staffMultiplier = 1 }
+	runtime[player] = { uncollected = 0, ratePerMinute = 0, multipliers = {}, autoCollect = false }
 	refreshRate(player, data)
 	setMaxZoneAttribute(player, data) -- §4 — client shows unlocked zones
 end

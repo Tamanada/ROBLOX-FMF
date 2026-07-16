@@ -218,7 +218,11 @@ end
 
 local function topupCrowd(crowd: PlotCrowd)
 	local fullMoon = if FullMoonService.IsActive() then Economy.FULL_MOON_SPAWN_MULTIPLIER else 1
-	local target = NPCService._spawnTarget(crowd.data.hype, EventService.IsNight(), fullMoon)
+	-- §8.1 — Golden Longtail Boat pass boosts NPC arrivals (attribute set by
+	-- MonetizationService); the per-plot cap in _spawnTarget still applies.
+	local arrivalAttr = crowd.player:GetAttribute("NPCArrivalMultiplier")
+	local arrival = if type(arrivalAttr) == "number" then arrivalAttr else 1
+	local target = NPCService._spawnTarget(crowd.data.hype, EventService.IsNight(), fullMoon * arrival)
 	local deficit = target - #crowd.npcs
 	if deficit <= 0 then
 		return

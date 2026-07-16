@@ -24,6 +24,9 @@ local HypeService = {}
 local modifiers: { [Player]: number } = {}
 -- §5.2 — per-player Hype from assigned staff (pushed by StaffService, S4).
 local staffHype: { [Player]: number } = {}
+-- §8.2 — timed Hype Boost product (+N for a while). Token guards overlap.
+local boosts: { [Player]: number } = {}
+local boostToken: { [Player]: number } = {}
 
 --------------------------------------------------------------------------
 -- Pure helpers (unit-tested in tests/World.spec.luau)
@@ -34,9 +37,10 @@ function HypeService._clampModifier(value: number): number
 	return math.clamp(value, Economy.HYPE_MODIFIER_MIN, Economy.HYPE_MODIFIER_MAX)
 end
 
--- §3.3 — final Hype from its components (equipment + cleanliness/decay + staff).
-function HypeService._composeHype(equipmentBonus: number, modifier: number, staff: number): number
-	return math.clamp(equipmentBonus + modifier + staff, 0, 100)
+-- §3.3 — final Hype from its components (equipment + cleanliness/decay + staff
+-- + timed boost).
+function HypeService._composeHype(equipmentBonus: number, modifier: number, staff: number, boost: number): number
+	return math.clamp(equipmentBonus + modifier + staff + boost, 0, 100)
 end
 
 -- Σ hype of non-broken equipment (broken equipment contributes 0 — §4).
@@ -65,6 +69,8 @@ function HypeService.Init() end
 function HypeService.CleanupPlayer(player: Player)
 	modifiers[player] = nil
 	staffHype[player] = nil
+	boosts[player] = nil
+	boostToken[player] = nil
 end
 
 --------------------------------------------------------------------------
@@ -74,11 +80,31 @@ end
 -- Recomputes the festival's Hype from equipment + the runtime modifier and
 -- writes it to the profile + the replicated attribute. Returns the new score.
 function HypeService.Recompute(player: Player, data: Types.PlayerData): number
-	local hype =
-		HypeService._composeHype(HypeService._equipmentBonus(data), modifiers[player] or 0, staffHype[player] or 0)
+	local hype = HypeService._composeHype(
+		HypeService._equipmentBonus(data),
+		modifiers[player] or 0,
+		staffHype[player] or 0,
+		boosts[player] or 0
+	)
 	data.hype = hype
 	player:SetAttribute("Hype", hype)
 	return hype
+end
+
+-- §8.2 — Hype Boost product: +amount for `duration` seconds, then it lapses.
+-- The token guards against an earlier boost's timer clearing a newer one.
+function HypeService.AddTimedBoost(player: Player, data: Types.PlayerData, amount: number, duration: number)
+	boosts[player] = amount
+	local token = (boostToken[player] or 0) + 1
+	boostToken[player] = token
+	HypeService.Recompute(player, data)
+
+	task.delay(duration, function()
+		if boostToken[player] == token then
+			boosts[player] = nil
+			HypeService.Recompute(player, data)
+		end
+	end)
 end
 
 -- §5.2 — StaffService pushes the summed Hype of assigned staff here, then this

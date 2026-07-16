@@ -17,10 +17,11 @@ local DataService = require(script.Parent.DataService)
 local EconomyService = {}
 
 -- Reasons that count toward stats.totalEarned (§10.4). Robux Shell packs
--- (Sprint 5) are purchases, not earnings.
+-- ("devproduct") are purchases, not earnings, so they're excluded.
 local EARNED_REASONS: { [string]: boolean } = {
 	collect = true,
 	offline = true,
+	quest = true, -- §6 daily visit quest reward
 }
 
 type AuditWindow = {

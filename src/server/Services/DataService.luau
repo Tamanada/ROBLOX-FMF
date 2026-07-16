@@ -17,7 +17,7 @@ local Economy = require(ReplicatedStorage.Shared.Config.Economy)
 local DataService = {}
 
 -- Bump this when adding a migration below.
-DataService.DATA_VERSION = 2
+DataService.DATA_VERSION = 3
 DataService.AUTOSAVE_INTERVAL_SECONDS = Economy.AUTOSAVE_INTERVAL_SECONDS
 
 -- Schéma joueur v1 (§10.4). ProfileStore deep-copies this template per
@@ -39,6 +39,10 @@ local TEMPLATE: Types.PlayerData = {
 	passes = {},
 	-- §4 — Zone 1 (Haad Rin) is unlocked from the start.
 	unlockedZones = { ["1"] = true },
+	-- §8.4.3 / §6 — monetization + social state (schema v3).
+	purchaseHistory = {},
+	festivalRating = { sum = 0, count = 0 },
+	social = { day = 0, visitedHosts = {}, ratedHosts = {}, questClaimed = false },
 	lastSeen = 0,
 }
 
@@ -52,10 +56,22 @@ DataService.TEMPLATE = TEMPLATE
 -- `data` in place. Applied in order by Migrate() after Reconcile().
 --
 -- v2 (Sprint 4) — introduce unlockedZones; Zone 1 is unlocked for everyone.
+-- v3 (Sprint 5) — monetization idempotency ledger + social state.
 local MIGRATIONS: { [number]: (data: any) -> () } = {
 	[2] = function(data)
 		if data.unlockedZones == nil then
 			data.unlockedZones = { ["1"] = true }
+		end
+	end,
+	[3] = function(data)
+		if data.purchaseHistory == nil then
+			data.purchaseHistory = {}
+		end
+		if data.festivalRating == nil then
+			data.festivalRating = { sum = 0, count = 0 }
+		end
+		if data.social == nil then
+			data.social = { day = 0, visitedHosts = {}, ratedHosts = {}, questClaimed = false }
 		end
 	end,
 }
