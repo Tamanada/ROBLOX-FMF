@@ -1,10 +1,15 @@
 --!strict
 -- server/Services/HypeService.luau — Blueprint §3.3 (ressource maîtresse).
--- v1 (Sprint 1): Hype = clamp(somme des bonus Hype des équipements posés
--- non cassés, 0, 100) — server-computed, replicated as a display-only
--- player attribute (§10.3.4).
--- Later versions per §3.3: propreté (S2), staff actifs (S4), décor,
--- uptime musique, decay −5/cycle (S2, avec le cycle jour/nuit),
+-- v2 (Sprint 2): Hype = clamp(equipmentBonus + modifier, 0, 100), where
+--   * equipmentBonus = Σ hype of non-broken equipment (v1),
+--   * modifier       = runtime cleanliness/decay accumulator (§3.3):
+--       + CLEANUP_HYPE_BONUS when the Beach Cleanup Flash is completed (§7),
+--       − HYPE_DECAY_PER_CYCLE per cycle if the beach is dirty OR any
+--         equipment is broken and unrepaired.
+-- The modifier is EPHEMERAL (session runtime only) — it is not persisted, so
+-- no PlayerData schema bump is needed. `data.hype` stores the computed value
+-- and is replicated as a display-only player attribute (§10.3.4).
+-- Later versions per §3.3: staff actifs (S4), décor, uptime musique,
 -- éligibilité multiplicateur Full Moon (S3).
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -15,13 +20,26 @@ local Equipment = require(ReplicatedStorage.Shared.Config.Equipment)
 
 local HypeService = {}
 
-function HypeService.Init() end
+-- Per-player cleanliness/decay accumulator (default 0). Cleared on leave.
+local modifiers: { [Player]: number } = {}
 
--- Recomputes the festival's Hype from its equipment and writes it to the
--- profile + the replicated attribute. Returns the new score.
-function HypeService.Recompute(player: Player, data: Types.PlayerData): number
+--------------------------------------------------------------------------
+-- Pure helpers (unit-tested in tests/World.spec.luau)
+--------------------------------------------------------------------------
+
+-- §3.3 — the accumulator is bounded before it folds into the 0-100 clamp.
+function HypeService._clampModifier(value: number): number
+	return math.clamp(value, Economy.HYPE_MODIFIER_MIN, Economy.HYPE_MODIFIER_MAX)
+end
+
+-- §3.3 — final Hype from its components.
+function HypeService._composeHype(equipmentBonus: number, modifier: number): number
+	return math.clamp(equipmentBonus + modifier, 0, 100)
+end
+
+-- Σ hype of non-broken equipment (broken equipment contributes 0 — §4).
+function HypeService._equipmentBonus(data: Types.PlayerData): number
 	local total = 0
-
 	local slot = data.plots[Economy.MAIN_PLOT_SLOT]
 	if slot ~= nil then
 		for _, entry in slot.equipment do
@@ -33,11 +51,47 @@ function HypeService.Recompute(player: Player, data: Types.PlayerData): number
 			end
 		end
 	end
+	return total
+end
 
-	local hype = math.clamp(total, 0, 100)
+--------------------------------------------------------------------------
+-- Lifecycle
+--------------------------------------------------------------------------
+
+function HypeService.Init() end
+
+function HypeService.CleanupPlayer(player: Player)
+	modifiers[player] = nil
+end
+
+--------------------------------------------------------------------------
+-- API
+--------------------------------------------------------------------------
+
+-- Recomputes the festival's Hype from equipment + the runtime modifier and
+-- writes it to the profile + the replicated attribute. Returns the new score.
+function HypeService.Recompute(player: Player, data: Types.PlayerData): number
+	local hype = HypeService._composeHype(HypeService._equipmentBonus(data), modifiers[player] or 0)
 	data.hype = hype
 	player:SetAttribute("Hype", hype)
 	return hype
+end
+
+-- §7 — Beach Cleanup Flash success: bump the cleanliness modifier by +bonus
+-- (bounded), then recompute. Called by EventService.
+function HypeService.AddCleanupBonus(player: Player, data: Types.PlayerData, bonus: number)
+	modifiers[player] = HypeService._clampModifier((modifiers[player] or 0) + bonus)
+	HypeService.Recompute(player, data)
+end
+
+-- §3.3 — per-cycle decay: −HYPE_DECAY_PER_CYCLE if the beach is dirty OR any
+-- equipment is broken. A clean, fully-repaired festival takes no penalty.
+-- Called by EventService at each cycle boundary.
+function HypeService.ApplyCycleDecay(player: Player, data: Types.PlayerData, isDirty: boolean, hasBroken: boolean)
+	if isDirty or hasBroken then
+		modifiers[player] = HypeService._clampModifier((modifiers[player] or 0) - Economy.HYPE_DECAY_PER_CYCLE)
+		HypeService.Recompute(player, data)
+	end
 end
 
 function HypeService.Get(data: Types.PlayerData): number

@@ -240,4 +240,34 @@ function PlotService.GetPlotOrigin(player: Player): CFrame?
 	return if plot ~= nil then plot.origin else nil
 end
 
+--------------------------------------------------------------------------
+-- Spatial accessors for the living world (Sprint 2: NPCs, cleanup)
+--------------------------------------------------------------------------
+
+-- Boat-taxi arrival point (§2.1) — the front (beach/water) edge of the plot,
+-- where NPC partygoers spawn and where they exit toward.
+function PlotService.GetArrivalCFrame(player: Player): CFrame?
+	local plot = plotByPlayer[player]
+	if plot == nil then
+		return nil
+	end
+	return plot.origin * CFrame.new(0, 1, PLOT_SIZE.Z / 2 - 2)
+end
+
+-- World positions of the working (non-broken) equipment on the player's plot,
+-- so NPCService can route partygoers to them without reaching into internals.
+function PlotService.GetEquipmentPositions(player: Player): { Vector3 }
+	local plot = plotByPlayer[player]
+	local positions: { Vector3 } = {}
+	if plot == nil then
+		return positions
+	end
+	for _, part in plot.equipmentFolder:GetChildren() do
+		if part:IsA("BasePart") and part:GetAttribute("Broken") ~= true then
+			table.insert(positions, part.Position)
+		end
+	end
+	return positions
+end
+
 return PlotService
