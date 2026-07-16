@@ -193,6 +193,8 @@ Infinity Fire Show Arena, Bioluminescent Lagoon, Treehouse VIP Deck, Full Moon A
 - Hype Boost +20 pendant 30 min (49 Robux).
 - Instant Repair All (25 Robux).
 
+> **Amendement Sprint 5 (17/07/2026).** (1) Montants des packs de Shells (non spécifiés) : 99→5 000, 249→15 000, 599→42 000, 1 299→100 000 (source `src/shared/Config/Monetization.luau`). (2) IDs d'assets (`gamePassId`/`productId`) = `0` placeholders jusqu'à création dans Studio (§10.1) — `ProcessReceipt` clef par ces IDs, donc rien n'est accordé avant leur renseignement. (3) **Extra Plot Slot** (§8.1, 2e slot de sauvegarde) et l'effet Legendary Full Moon (§5.2) restent **différés** (persistance multi-plot / horloge synchronisée). (4) Config monétisation dans un nouveau fichier `Config/Monetization.luau` (principe config-driven §10.3.3).
+
 ### 8.3 Cosmétiques
 - Skins d'équipements (stages, dance floors), thèmes d'île (Neon Jungle, Zen Sunset, Cyber Moon), traînées d'avatar UV.
 - Payables en Moon Shards (earn) **ou** Robux (skip) — double voie systématique.

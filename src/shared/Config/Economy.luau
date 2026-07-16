@@ -153,4 +153,17 @@ return table.freeze({
 	VIP_HYPE_REQUIREMENT = 50,
 	VIP_DURATION_SECONDS = 60,
 	VIP_REVENUE_MULTIPLIER = 1.5,
+
+	------------------------------------------------------------------
+	-- §6 — Social (visites, ratings, bonus amis)
+	------------------------------------------------------------------
+	-- Quête quotidienne "Visit 3 festivals" → récompense Shells.
+	VISIT_QUEST_TARGET = 3,
+	VISIT_QUEST_REWARD_SHELLS = 2500,
+	-- Festival Rating : 1-5 étoiles, 1 vote/hôte/jour (appliqué via social.ratedHosts).
+	RATING_MIN = 1,
+	RATING_MAX = 5,
+	-- +5 % revenus si un ami est sur le serveur (viralité organique).
+	FRIEND_BONUS_MULTIPLIER = 1.05,
+	SECONDS_PER_DAY = 86400,
 })

@@ -38,6 +38,22 @@ export type PlayerStats = {
 	visits: number,
 }
 
+-- §6 — aggregate festival rating (1-5 stars) received from visitors.
+export type FestivalRating = {
+	sum: number,
+	count: number,
+}
+
+-- §6 — per-day social state (reset when `day` changes): distinct hosts visited
+-- (daily "Visit 3" quest), hosts already rated today (1 vote/host/day), and
+-- whether today's visit quest reward was claimed.
+export type SocialState = {
+	day: number,
+	visitedHosts: { [string]: boolean },
+	ratedHosts: { [string]: boolean },
+	questClaimed: boolean,
+}
+
 export type PlayerData = {
 	dataVersion: number,
 	shells: number,
@@ -50,6 +66,11 @@ export type PlayerData = {
 	passes: { [string]: boolean },
 	-- §4 — unlocked zones ("1" always unlocked). Added in schema v2 (S4).
 	unlockedZones: { [string]: boolean },
+	-- §8.4.3 — granted Developer Product PurchaseIds (idempotent ProcessReceipt).
+	-- §6 — festival rating + daily social state. All added in schema v3 (S5).
+	purchaseHistory: { [string]: boolean },
+	festivalRating: FestivalRating,
+	social: SocialState,
 	lastSeen: number,
 }
 
