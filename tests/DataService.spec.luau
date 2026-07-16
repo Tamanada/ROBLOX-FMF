@@ -63,7 +63,7 @@ return function()
 
 		it("applies chained migrations in order and stamps dataVersion", function()
 			local calls = {}
-			local data = { dataVersion = 1 }
+			local data: any = { dataVersion = 1 }
 
 			DataService.MigrateTo(data, 3, {
 				[2] = function(d)
@@ -91,7 +91,7 @@ return function()
 		end)
 
 		it("treats a missing dataVersion as version 1", function()
-			local data = {}
+			local data: any = {}
 			DataService.MigrateTo(data, 2, {
 				[2] = function(d)
 					d.patched = true

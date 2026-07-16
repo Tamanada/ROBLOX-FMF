@@ -22,15 +22,18 @@ jobs:
         run: rojo sourcemap default.project.json -o sourcemap.json
 
       - name: Download Roblox type definitions
-        run: curl -sO https://raw.githubusercontent.com/JohnnyMorganz/luau-lsp/main/scripts/globalTypes.d.luau
+        # Pinned to the luau-lsp version in rokit.toml — the `main` defs use
+        # newer declaration syntax that older binaries cannot parse.
+        run: curl -sO https://raw.githubusercontent.com/JohnnyMorganz/luau-lsp/1.36.0/scripts/globalTypes.d.luau
 
       - name: Analyze (luau-lsp, strict)
         run: |
           luau-lsp analyze \
             --defs=globalTypes.d.luau \
+            --defs=testez.d.luau \
             --sourcemap=sourcemap.json \
             --ignore "Packages/**" \
-            --ignore "src/server/Packages/**" \
+            --ignore "**/Packages/**" \
             src tests
 
       - name: Style check (StyLua)

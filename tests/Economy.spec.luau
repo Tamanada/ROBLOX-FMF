@@ -120,7 +120,7 @@ return function()
 		end)
 
 		it("computes the plot rate from working equipment, Hype included", function()
-			local data = {
+			local data: any = {
 				hype = 0,
 				plots = {
 					main = {
@@ -145,7 +145,7 @@ return function()
 		end)
 
 		it("broken equipment earns nothing (§4)", function()
-			local data = {
+			local data: any = {
 				hype = 0,
 				plots = {
 					main = {

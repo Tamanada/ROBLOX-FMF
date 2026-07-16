@@ -31,7 +31,7 @@ return function()
 			expect(reason).to.be.ok()
 		end)
 
-		it("accepts nil for an optional argument (\"number?\")", function()
+		it('accepts nil for an optional argument ("number?")', function()
 			local ok = Net._validate({ "string", "number?" }, table.pack("dance_floor"))
 			expect(ok).to.equal(true)
 		end)
@@ -48,20 +48,18 @@ return function()
 		end)
 
 		it("rejects Infinity and -Infinity for a number argument", function()
-			expect(Net._validate({ "number" }, table.pack(math.huge))).to.equal(false)
-			expect(Net._validate({ "number" }, table.pack(-math.huge))).to.equal(false)
+			-- extra parens truncate _validate's multi-return to one value
+			expect((Net._validate({ "number" }, table.pack(math.huge)))).to.equal(false)
+			expect((Net._validate({ "number" }, table.pack(-math.huge)))).to.equal(false)
 		end)
 
 		it("still accepts ordinary finite numbers (zero, negative, float)", function()
-			expect(Net._validate({ "number" }, table.pack(0))).to.equal(true)
-			expect(Net._validate({ "number" }, table.pack(-12.5))).to.equal(true)
+			expect((Net._validate({ "number" }, table.pack(0)))).to.equal(true)
+			expect((Net._validate({ "number" }, table.pack(-12.5)))).to.equal(true)
 		end)
 
 		it("validates Roblox types via typeof (Vector3, CFrame)", function()
-			local ok = Net._validate(
-				{ "Vector3", "CFrame" },
-				table.pack(Vector3.new(1, 2, 3), CFrame.new())
-			)
+			local ok = Net._validate({ "Vector3", "CFrame" }, table.pack(Vector3.new(1, 2, 3), CFrame.new()))
 			expect(ok).to.equal(true)
 
 			local bad = Net._validate({ "Vector3" }, table.pack(CFrame.new()))

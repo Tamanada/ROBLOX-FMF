@@ -47,11 +47,7 @@ local function buildPlot(index: number, parent: Folder): PlotRuntime
 	-- procedural placeholder later (Studio = placement 3D only, §10.1).
 	local row = math.floor((index - 1) / PLOTS_PER_ROW)
 	local column = (index - 1) % PLOTS_PER_ROW
-	local origin = CFrame.new(
-		column * (PLOT_SIZE.X + PLOT_GAP),
-		PLOT_SIZE.Y / 2,
-		row * (PLOT_SIZE.Z + PLOT_GAP)
-	)
+	local origin = CFrame.new(column * (PLOT_SIZE.X + PLOT_GAP), PLOT_SIZE.Y / 2, row * (PLOT_SIZE.Z + PLOT_GAP))
 
 	local model = Instance.new("Model")
 	model.Name = `Plot_{index}`
@@ -123,9 +119,7 @@ local function spawnEquipmentPlaceholder(plot: PlotRuntime, entry: Types.Equipme
 	part.Size = Vector3.new(4, 4, 4)
 	-- Saved CFrames are relative to the plot origin (§10.4 note in Types).
 	part.CFrame = plot.origin * Serde.deserializeCFrame(entry.cframe)
-	part.Color = if entry.broken
-		then Color3.fromRGB(120, 120, 120)
-		else Color3.fromRGB(0, 229, 255) -- néon cyan #00E5FF (§9)
+	part.Color = if entry.broken then Color3.fromRGB(120, 120, 120) else Color3.fromRGB(0, 229, 255) -- néon cyan #00E5FF (§9)
 	part:SetAttribute("EquipmentId", entry.id)
 	part:SetAttribute("Index", index)
 	part:SetAttribute("Level", entry.level)

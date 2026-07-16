@@ -325,8 +325,7 @@ function UIController.Start()
 				table.sort(parts, function(a, b)
 					local ia = a:GetAttribute("Index")
 					local ib = b:GetAttribute("Index")
-					return (if type(ia) == "number" then ia else 0)
-						< (if type(ib) == "number" then ib else 0)
+					return (if type(ia) == "number" then ia else 0) < (if type(ib) == "number" then ib else 0)
 				end)
 
 				for _, part in parts do

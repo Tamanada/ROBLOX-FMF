@@ -273,13 +273,8 @@ function BuildService.Init()
 			task.wait(Economy.REVENUE_TICK_SECONDS)
 			for player, playerRuntime in runtime do
 				if playerRuntime.ratePerMinute > 0 then
-					playerRuntime.uncollected += playerRuntime.ratePerMinute
-						* (Economy.REVENUE_TICK_SECONDS / 60)
-					PlotService.SetPlotAttribute(
-						player,
-						"Uncollected",
-						math.floor(playerRuntime.uncollected)
-					)
+					playerRuntime.uncollected += playerRuntime.ratePerMinute * (Economy.REVENUE_TICK_SECONDS / 60)
+					PlotService.SetPlotAttribute(player, "Uncollected", math.floor(playerRuntime.uncollected))
 				end
 			end
 		end

@@ -58,11 +58,7 @@ local MIGRATIONS: { [number]: (data: any) -> () } = {}
 -- Pure engine, exposed for tests: upgrades `data` step by step until
 -- `targetVersion`, erroring loudly if a step is missing (a hole in the
 -- migration chain must never be silent).
-function DataService.MigrateTo(
-	data: any,
-	targetVersion: number,
-	migrations: { [number]: (data: any) -> () }
-): any
+function DataService.MigrateTo(data: any, targetVersion: number, migrations: { [number]: (data: any) -> () }): any
 	local version = if type(data.dataVersion) == "number" then data.dataVersion else 1
 
 	while version < targetVersion do
@@ -105,8 +101,7 @@ function DataService.Init(options: InitOptions?)
 	end
 
 	local opts: InitOptions = options or {}
-	local profileStoreModule = opts.profileStore
-		or require(script.Parent.Parent.Packages.ProfileStore) :: any
+	local profileStoreModule = opts.profileStore or require(script.Parent.Parent.Packages.ProfileStore) :: any
 	playerStore = profileStoreModule.New(opts.storeName or "PlayerData", TEMPLATE)
 end
 

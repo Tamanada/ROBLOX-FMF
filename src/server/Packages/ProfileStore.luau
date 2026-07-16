@@ -1,3 +1,6 @@
+--!nolint LocalUnused
+--!nolint LocalShadow
+-- ^ FMF vendor patch: silence upstream lints in CI analysis. No code changes.
 --[[
 MAD STUDIO (by loleris)
 
