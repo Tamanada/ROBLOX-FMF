@@ -41,6 +41,22 @@ return function()
 			expect(ok).to.equal(false)
 		end)
 
+		it("rejects NaN for a number argument (exploit payload)", function()
+			local ok, reason = Net._validate({ "number" }, table.pack(0 / 0))
+			expect(ok).to.equal(false)
+			expect(reason).to.be.ok()
+		end)
+
+		it("rejects Infinity and -Infinity for a number argument", function()
+			expect(Net._validate({ "number" }, table.pack(math.huge))).to.equal(false)
+			expect(Net._validate({ "number" }, table.pack(-math.huge))).to.equal(false)
+		end)
+
+		it("still accepts ordinary finite numbers (zero, negative, float)", function()
+			expect(Net._validate({ "number" }, table.pack(0))).to.equal(true)
+			expect(Net._validate({ "number" }, table.pack(-12.5))).to.equal(true)
+		end)
+
 		it("validates Roblox types via typeof (Vector3, CFrame)", function()
 			local ok = Net._validate(
 				{ "Vector3", "CFrame" },

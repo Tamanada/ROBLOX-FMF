@@ -61,6 +61,9 @@ function Net._validate(spec: Spec, args: PackedArgs): (boolean, string?)
 			elseif typeof(value) ~= expected then
 				return false,
 					string.format("argument #%d: expected %s, got %s", index, expected, typeof(value))
+			elseif expected == "number" and (value ~= value or value == math.huge or value == -math.huge) then
+				-- NaN/±inf are classic economy-exploit payloads: always reject.
+				return false, string.format("argument #%d: number must be finite", index)
 			end
 		end
 	end

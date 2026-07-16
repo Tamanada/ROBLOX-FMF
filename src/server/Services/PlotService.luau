@@ -29,6 +29,7 @@ type PlotRuntime = {
 	equipmentFolder: Folder,
 	spawnPart: BasePart,
 	ownerUserId: number?,
+	characterConnection: RBXScriptConnection?,
 }
 
 local plots: { PlotRuntime } = {}
@@ -88,6 +89,7 @@ local function buildPlot(index: number, parent: Folder): PlotRuntime
 		equipmentFolder = equipmentFolder,
 		spawnPart = spawnPart,
 		ownerUserId = nil,
+		characterConnection = nil,
 	}
 end
 
@@ -147,15 +149,18 @@ end
 -- Assignment lifecycle
 --------------------------------------------------------------------------
 
-local function teleportToPlot(player: Player, plot: PlotRuntime)
+-- Returns the CharacterAdded connection so Release() can disconnect it
+-- (connections must never outlive their owner — no orphaned listeners).
+local function teleportToPlot(player: Player, plot: PlotRuntime): RBXScriptConnection
 	local function place(character: Model)
 		character:PivotTo(plot.spawnPart.CFrame + Vector3.new(0, 3, 0))
 	end
 
-	player.CharacterAdded:Connect(place)
+	local connection = player.CharacterAdded:Connect(place)
 	if player.Character ~= nil then
 		place(player.Character)
 	end
+	return connection
 end
 
 -- Assigns the first free plot and reloads saved equipment onto it.
@@ -187,7 +192,7 @@ function PlotService.Assign(player: Player, data: Types.PlayerData): number?
 	plotByPlayer[player] = plot
 
 	loadSavedEquipment(plot, data)
-	teleportToPlot(player, plot)
+	plot.characterConnection = teleportToPlot(player, plot)
 
 	return plot.index
 end
@@ -202,6 +207,11 @@ function PlotService.Release(player: Player)
 	plot.ownerUserId = nil
 	plot.model:SetAttribute("OwnerUserId", nil)
 	plot.equipmentFolder:ClearAllChildren()
+
+	if plot.characterConnection ~= nil then
+		plot.characterConnection:Disconnect()
+		plot.characterConnection = nil
+	end
 end
 
 function PlotService.GetPlotIndex(player: Player): number?
