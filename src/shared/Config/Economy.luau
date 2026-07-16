@@ -91,4 +91,25 @@ return table.freeze({
 	NPC_STAY_SECONDS = 7,
 	NPC_TOPUP_INTERVAL_SECONDS = 1.5,
 	NPC_MAX_SPAWNS_PER_TOPUP = 3,
+
+	------------------------------------------------------------------
+	-- §2.3 / §10.5 — FULL MOON EVENT (global, UTC-synced)
+	------------------------------------------------------------------
+	-- Every 2 h real-time, aligned to UTC multiples of the period (00:00,
+	-- 02:00 … UTC) via os.time() % PERIOD — all servers converge with no
+	-- MessagingService in v1 (§10.5). Duration 10 min.
+	FULL_MOON_PERIOD_SECONDS = 7200,
+	FULL_MOON_DURATION_SECONDS = 600,
+	-- Revenue multiplier during the event: ×5 if the max-gate is met, else ×2.
+	FULL_MOON_REVENUE_MULTIPLIER_MAX = 5,
+	FULL_MOON_REVENUE_MULTIPLIER_REDUCED = 2,
+	-- Partygoer spawn ×3 during the event (still capped at NPC_MAX_PER_PLOT).
+	FULL_MOON_SPAWN_MULTIPLIER = 3,
+	-- §2.3 max-gate: Hype ≥ 80 % + all repaired + ≥1 staff/zone (staff stubbed
+	-- until StaffService, S4 — see Blueprint §2.3 amendment).
+	FULL_MOON_HYPE_THRESHOLD = 80,
+	-- §2.3 amendment (2026-07-17) — Moon Shards granted per event to each
+	-- present player: MAX if eligible for the ×5 gate, BASE otherwise.
+	FULL_MOON_SHARDS_MAX = 5,
+	FULL_MOON_SHARDS_BASE = 2,
 })

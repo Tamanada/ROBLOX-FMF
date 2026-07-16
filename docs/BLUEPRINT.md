@@ -45,7 +45,9 @@ Tu débarques sur une plage vide de Koh Phangan avec un feu de camp et un stand 
 - **FULL MOON EVENT : toutes les 2 heures temps réel, synchronisé sur tous les serveurs** (00:00, 02:00, 04:00 UTC…). Durée : 10 minutes.
   - Multiplicateur revenus ×5, spawn de fêtards ×3, ciel transformé (lune géante, océan phosphorescent).
   - **Condition d'accès au multiplicateur max :** Hype ≥ 80 % + tous les équipements réparés + au moins 1 staff actif par zone débloquée. Sinon multiplicateur réduit (×2).
+    - *(amendement Sprint 3 — 17/07/2026)* : la sous-condition « 1 staff actif par zone » dépend de `StaffService` (Sprint 4). Jusqu'à sa livraison, cette sous-condition est **satisfaite par défaut** (prédicat enfichable) — les deux autres conditions (Hype ≥ 80 %, tout réparé) sont pleinement évaluées dès le Sprint 3.
   - Récompense exclusive : **Moon Shards** (monnaie dure soft-earnable), utilisée pour le staff Legendary et les cosmétiques d'île.
+    - *(amendement Sprint 3 — 17/07/2026)* : montant contraignant de la récompense par event, attribué en fin de Full Moon à chaque joueur présent : **5 Moon Shards** si éligible au multiplicateur max, **2 Moon Shards** sinon. (Repère : un roll staff Epic garanti = 5 Moon Shards §5.1 → ~1 Epic toutes les 2 h de jeu assidu au max.)
 - **Prestige ("Season Reset") :** au niveau max d'une plage, le joueur peut "immortaliser" son festival (statue + badge + multiplicateur permanent +10 % par prestige, cap ×2.5) et recommencer avec bonus.
 
 ### 2.4 Anti-idle / AFK
