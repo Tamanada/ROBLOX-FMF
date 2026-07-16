@@ -69,6 +69,7 @@ Tu débarques sur une plage vide de Koh Phangan avec un feu de camp et un stand 
 - Payback tier 5 : **45-60 min**.
 - Croissance des coûts : ×1.9 par tier ; croissance des revenus : ×1.6 par tier (écart volontaire → le joueur "sent" le mur → motivation staff/upgrades/Game Pass).
 - Première session (D0) : le joueur doit poser **au moins 4 équipements** et vivre **une nuit complète** en < 15 minutes. C'est le hook.
+- **Solde de départ : 750 Shells** *(amendement Sprint 1 — 16/07/2026)* : avec le Campfire offert + 750 Shells, les 3 achats tier 1 (100 + 250 + 400) sont immédiats → 4 équipements posés dès les premières minutes, et le mur économique commence au tier 2.
 
 ### 3.3 Le Hype (ressource maîtresse)
 - Score 0-100 par festival. Calcul serveur : `Hype = f(diversité des équipements, propreté, staff actifs, décor, uptime musique)`.

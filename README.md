@@ -2,17 +2,31 @@
 
 Tycoon Roblox — Koh Phangan. **[`docs/BLUEPRINT.md`](docs/BLUEPRINT.md) est le document contraignant** : architecture §10, règles serveur-autoritaire §10.3, économie §3–§4. Aucune déviation sans mise à jour préalable du Blueprint.
 
-## État — Sprint 0 (Fondations) ✅
+## État
+
+### Sprint 0 (Fondations) ✅
 
 | Tâche | Statut |
 |---|---|
 | Structure repo §10.2 + `default.project.json` (Rojo 7), Luau `--!strict` | ✅ |
-| `shared/Util/Net.luau` — validation de types + rate limiting 10 req/s/joueur (kick) | ✅ |
+| `shared/Util/Net.luau` — validation de types (+ rejet NaN/Infinity) + rate limiting 10 req/s/joueur (kick) | ✅ |
 | `DataService` — ProfileStore (vendoré), session-locking, autosave 60 s, save on leave, migrations | ✅ |
 | `PlotService` — 12 plots/serveur, attribution au join, libération au leave, reload équipements | ✅ |
 | Tests TestEZ — Net (validation/rejet), DataService (défauts, migration, persistance) | ✅ |
 
-**DoD :** un joueur rejoint → reçoit un plot → ses données persistent entre deux sessions. Aucune feature de gameplay (économie, NPC, Full Moon) n'est implémentée : les services concernés sont des stubs structurels pointant vers leur sprint (§12).
+### Sprint 1 (Boucle cœur) ✅
+
+| Tâche | Statut |
+|---|---|
+| Catalogue Zone 1 — 13 items §4 (valeurs contraignantes, taux nuit) dans `shared/Config` | ✅ |
+| `EconomyService` — portefeuille autoritaire, leaderstats display-only, audit anomalies §11.4 | ✅ |
+| `HypeService` v1 — somme des bonus équipements, clamp 0-100, attribut répliqué | ✅ |
+| `BuildService` — buy/upgrade/repair/collect (intents typés §10.3), campfire offert, bounds check | ✅ |
+| Revenus — boucle d'accrual serveur (taux effectif ×(1+Hype/100)), offline 20 %/cap 8 h (§2.4) | ✅ |
+| `UIController` client — HUD, boutique, panneau festival, collecte, toasts | ✅ |
+| Tests TestEZ — matrice catalogue §4, formules EconomyMath, bounds/taux BuildService | ✅ |
+
+**DoD S1 :** boucle achat→revenu→réinvestissement jouable. Amendement Blueprint §3.2 : solde de départ 750 Shells (hook D0 : campfire offert + 3 achats tier 1 immédiats). La validation « vivre une nuit complète » du hook D0 requiert le cycle jour/nuit (Sprint 2).
 
 ## Setup
 

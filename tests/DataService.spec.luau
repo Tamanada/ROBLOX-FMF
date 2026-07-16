@@ -7,7 +7,10 @@ return function()
 	local ServerScriptService = game:GetService("ServerScriptService")
 	local Players = game:GetService("Players")
 
+	local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
 	local DataService = require(ServerScriptService.Server.Services.DataService)
+	local Economy = require(ReplicatedStorage.Shared.Config.Economy)
 	local MockProfileStore = require(script.Parent.Mocks.MockProfileStore)
 
 	local function makeMockPlayer(userId)
@@ -31,7 +34,8 @@ return function()
 		it("carries every v1 field with its default", function()
 			local template = DataService.TEMPLATE
 			expect(template.dataVersion).to.equal(1)
-			expect(template.shells).to.equal(0)
+			-- §3.2 amendment (Sprint 1): starting balance enables the D0 hook.
+			expect(template.shells).to.equal(Economy.STARTING_SHELLS)
 			expect(template.moonShards).to.equal(0)
 			expect(template.hype).to.equal(0)
 			expect(template.prestigeCount).to.equal(0)
@@ -106,7 +110,7 @@ return function()
 
 			local data = DataService.Get(player)
 			expect(data).to.be.ok()
-			expect(data.shells).to.equal(0)
+			expect(data.shells).to.equal(Economy.STARTING_SHELLS)
 			expect(data.dataVersion).to.equal(DataService.DATA_VERSION)
 
 			DataService.Release(player)
