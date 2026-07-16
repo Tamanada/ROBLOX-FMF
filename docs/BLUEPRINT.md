@@ -190,7 +190,7 @@ Infinity Fire Show Arena, Bioluminescent Lagoon, Treehouse VIP Deck, Full Moon A
 
 ### 10.1 Stack & workflow
 - **Luau strict mode** (`--!strict`) partout.
-- **Rojo 7** + repo GitHub (`github.com/tamanada/full-moon-festival`) → développement dans Claude Code, sync vers Studio. Studio = placement 3D et publication uniquement.
+- **Rojo 7** + repo GitHub (`github.com/Tamanada/ROBLOX-FMF`) → développement dans Claude Code, sync vers Studio. Studio = placement 3D et publication uniquement.
 - Gestion des assets 3D : Toolbox filtré + assets custom ; IDs centralisés dans un module `AssetRegistry`.
 
 ### 10.2 Structure du repo

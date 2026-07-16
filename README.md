@@ -46,4 +46,4 @@ Les specs (`tests/*.spec.luau`) sont `--!nonstrict` car TestEZ injecte `describe
 - **ProfileStore** (MadStudio) est vendoré dans `src/server/Packages/ProfileStore.luau`. Il gère nativement le mock mode en Studio sans accès API.
 - Les CFrames d'équipements sont sérialisés en 12 composantes numériques, **relatives à l'origine du plot** (les DataStores ne stockent pas les CFrames).
 - `DataService.SaveNow()` est le hook « save post-transaction Robux » (§10.4) que `MonetizationService` consommera au Sprint 5.
-- Le remote `github.com/tamanada/full-moon-festival` (§10.1) n'est pas encore configuré — `git remote add origin …` puis push quand le repo GitHub existe.
+- Remote GitHub : [`Tamanada/ROBLOX-FMF`](https://github.com/Tamanada/ROBLOX-FMF) (§10.1).
