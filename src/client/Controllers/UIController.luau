@@ -68,7 +68,7 @@ function UIController.Start()
 	local statsFrame = create("Frame", {
 		Name = "Stats",
 		Position = UDim2.fromOffset(12, 12),
-		Size = UDim2.fromOffset(190, 64),
+		Size = UDim2.fromOffset(190, 88),
 		BackgroundColor3 = COLOR_NAVY,
 		BackgroundTransparency = 0.15,
 		BorderSizePixel = 0,
@@ -87,9 +87,21 @@ function UIController.Start()
 		Text = "🐚 …",
 	}, statsFrame) :: TextLabel
 
+	local moonShardsLabel = create("TextLabel", {
+		Name = "MoonShards",
+		Position = UDim2.fromOffset(10, 32),
+		Size = UDim2.new(1, -20, 0, 22),
+		BackgroundTransparency = 1,
+		Font = Enum.Font.GothamBold,
+		TextSize = 16,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		TextColor3 = COLOR_WHITE,
+		Text = "🌕 0",
+	}, statsFrame) :: TextLabel
+
 	local hypeLabel = create("TextLabel", {
 		Name = "Hype",
-		Position = UDim2.fromOffset(10, 34),
+		Position = UDim2.fromOffset(10, 58),
 		Size = UDim2.new(1, -20, 0, 22),
 		BackgroundTransparency = 1,
 		Font = Enum.Font.GothamBold,
@@ -107,6 +119,13 @@ function UIController.Start()
 		end
 		shells.Changed:Connect(updateShells)
 		updateShells()
+
+		local moonShards = leaderstats:WaitForChild("MoonShards") :: IntValue
+		local function updateMoonShards()
+			moonShardsLabel.Text = `🌕 {Formatter.abbreviate(moonShards.Value)}`
+		end
+		moonShards.Changed:Connect(updateMoonShards)
+		updateMoonShards()
 	end)
 
 	local function updateHype()

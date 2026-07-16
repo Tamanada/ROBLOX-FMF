@@ -46,6 +46,22 @@ Tycoon Roblox — Koh Phangan. **[`docs/BLUEPRINT.md`](docs/BLUEPRINT.md) est le
 - Le modificateur de propreté/decay du Hype est **runtime (non persisté)** — aucun bump de schéma `dataVersion`.
 - Les `SoundId` d'ambiance sont laissés vides : boucles libres de droits assignées dans Studio via l'AssetRegistry (§9/§10.1 — jamais de musique commerciale réelle).
 
+### Sprint 3 (Full Moon) ✅
+
+| Tâche | Statut |
+|---|---|
+| `FullMoonService` — horloge UTC globale §10.5 (`os.time() % 7200 < 600`), event 10 min toutes les 2 h, synchro sans MessagingService | ✅ |
+| Multiplicateurs §2.3 — revenus ×5 (gate) / ×2 (réduit) empilés sur jour/nuit dans `BuildService` ; spawn NPC ×3 (cap 40 §10.6) | ✅ |
+| Gate d'accès §2.3 — Hype ≥ 80 % + tout réparé + staff/zone (prédicat enfichable, stub jusqu'à S4) | ✅ |
+| **Moon Shards** §3.1 — monnaie dure earn-only, wallet `EconomyService` (`CreditMoonShards`, leaderstat), récompense fin d'event (5 éligible / 2 sinon) + `SaveNow` | ✅ |
+| VFX / sky transform §9 — `AmbienceController` : lighting Full Moon + Bloom, bannière hero + compte à rebours, attributs Workspace répliqués | ✅ |
+| Audit §11.4 — plafond élargi de l'enveloppe Full Moon ×5 (pas de faux positif sur les top festivals) | ✅ |
+| Tests TestEZ — horloge UTC déterministe (preuve de synchro cross-serveur), multiplicateur/récompense, spawn ×3 (`tests/FullMoon.spec.luau`) | ✅ |
+
+**DoD S3 :** « Event synchronisé vérifié sur 2 serveurs simultanés ». La synchro découle du fait que l'état est une **fonction pure de l'epoch UTC** (`os.time() % 7200`) : deux serveurs évaluant à la même seconde UTC obtiennent le même état, sans messagerie cross-serveur (§10.5) — c'est ce que prouvent de façon déterministe les helpers testés (`_isActiveAt` / `_secondsRemainingAt`). MessagingService (annonces + leaderboards cross-serveur) reste en v1.1 (§10.5).
+
+**Amendements Blueprint §2.3 (17/07/2026) :** (1) récompense contraignante par Full Moon = **5 Moon Shards** si éligible au ×5, **2** sinon (le montant était non spécifié) ; (2) la sous-condition « 1 staff actif par zone » est **satisfaite par défaut** (prédicat enfichable) jusqu'à `StaffService` (Sprint 4) — les deux autres conditions du gate sont pleinement évaluées dès S3.
+
 ## Setup
 
 ```sh

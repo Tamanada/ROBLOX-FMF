@@ -22,6 +22,8 @@ local Net = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Util"
 
 local ATTR_PHASE = "FMF_Phase"
 local ATTR_PHASE_ENDS_AT = "FMF_PhaseEndsAt"
+local ATTR_FULL_MOON = "FMF_FullMoonActive"
+local ATTR_FULL_MOON_ENDS_AT = "FMF_FullMoonEndsAt"
 
 local COLOR_NAVY = Color3.fromRGB(11, 29, 58) -- #0B1D3A (§9)
 local COLOR_GOLD = Color3.fromRGB(255, 209, 102) -- #FFD166
@@ -46,6 +48,15 @@ local NIGHT_LIGHTING = {
 	FogEnd = 900,
 	FogColor = COLOR_NAVY,
 }
+-- §2.3/§9 — Full Moon sky transform: giant moon, phosphorescent ocean. It
+-- overrides the day/night look for the duration of the event.
+local FULL_MOON_LIGHTING = {
+	ClockTime = 0,
+	Brightness = 1.3,
+	OutdoorAmbient = Color3.fromRGB(40, 74, 120),
+	FogEnd = 1300,
+	FogColor = Color3.fromRGB(18, 58, 92),
+}
 
 local player = Players.LocalPlayer
 
@@ -65,6 +76,10 @@ end
 local function currentPhase(): string
 	local phase = Workspace:GetAttribute(ATTR_PHASE)
 	return if type(phase) == "string" then phase else "Day"
+end
+
+local function isFullMoon(): boolean
+	return Workspace:GetAttribute(ATTR_FULL_MOON) == true
 end
 
 function AmbienceController.Start()
@@ -100,17 +115,30 @@ function AmbienceController.Start()
 		return 0.4 + 0.6 * math.clamp(value / 100, 0, 1)
 	end
 
-	local function applyPhase()
-		local isNight = currentPhase() == "Night"
-		local target = if isNight then NIGHT_LIGHTING else DAY_LIGHTING
-		TweenService:Create(Lighting, PHASE_TWEEN, target):Play()
+	-- §2.3/§9 — the moon blooms during the Full Moon event.
+	local bloom = create("BloomEffect", {
+		Name = "FMF_FullMoonBloom",
+		Intensity = 0,
+		Size = 24,
+		Threshold = 0.85,
+	}, Lighting) :: BloomEffect
 
+	local function applyPhase()
+		local fullMoon = isFullMoon()
+		local isNight = currentPhase() == "Night"
+		local target = if fullMoon then FULL_MOON_LIGHTING elseif isNight then NIGHT_LIGHTING else DAY_LIGHTING
+		TweenService:Create(Lighting, PHASE_TWEEN, target):Play()
+		TweenService:Create(bloom, PHASE_TWEEN, { Intensity = if fullMoon then 1.4 else 0 }):Play()
+
+		-- The Full Moon runs the night (house-tribal) loop at full ambiance.
+		local night = isNight or fullMoon
 		local gain = hypeGain()
-		TweenService:Create(daySound, AUDIO_TWEEN, { Volume = if isNight then 0 else gain }):Play()
-		TweenService:Create(nightSound, AUDIO_TWEEN, { Volume = if isNight then gain else 0 }):Play()
+		TweenService:Create(daySound, AUDIO_TWEEN, { Volume = if night then 0 else gain }):Play()
+		TweenService:Create(nightSound, AUDIO_TWEEN, { Volume = if night then gain else 0 }):Play()
 	end
 
 	Workspace:GetAttributeChangedSignal(ATTR_PHASE):Connect(applyPhase)
+	Workspace:GetAttributeChangedSignal(ATTR_FULL_MOON):Connect(applyPhase)
 	player:GetAttributeChangedSignal("Hype"):Connect(applyPhase)
 	applyPhase()
 
@@ -194,6 +222,48 @@ function AmbienceController.Start()
 		local total = if type(state.total) == "number" then state.total else 0
 		cleanupBanner.Visible = true
 		cleanupBanner.Text = `🧹 Beach Cleanup — {collected}/{total}`
+	end)
+
+	----------------------------------------------------------------------
+	-- Full Moon banner (§2.3) — hero countdown while the event is live
+	----------------------------------------------------------------------
+	local fullMoonBanner = create("TextLabel", {
+		Name = "FullMoon",
+		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.new(0.5, 0, 0, 132),
+		Size = UDim2.fromOffset(320, 40),
+		BackgroundColor3 = COLOR_NAVY,
+		BackgroundTransparency = 0.05,
+		BorderSizePixel = 0,
+		Font = Enum.Font.GothamBlack,
+		TextSize = 20,
+		TextColor3 = COLOR_GOLD,
+		Text = "",
+		Visible = false,
+	}, gui) :: TextLabel
+	create("UICorner", { CornerRadius = UDim.new(0, 10) }, fullMoonBanner)
+	create("UIStroke", { Color = COLOR_GOLD, Thickness = 1.5, Transparency = 0.2 }, fullMoonBanner)
+
+	local function updateFullMoonBanner()
+		if not isFullMoon() then
+			fullMoonBanner.Visible = false
+			return
+		end
+		local endsAt = Workspace:GetAttribute(ATTR_FULL_MOON_ENDS_AT)
+		local remaining = 0
+		if type(endsAt) == "number" then
+			remaining = math.max(0, endsAt - os.time())
+		end
+		fullMoonBanner.Visible = true
+		fullMoonBanner.Text = string.format("🌕 FULL MOON  %d:%02d", math.floor(remaining / 60), remaining % 60)
+	end
+	Workspace:GetAttributeChangedSignal(ATTR_FULL_MOON):Connect(updateFullMoonBanner)
+	Workspace:GetAttributeChangedSignal(ATTR_FULL_MOON_ENDS_AT):Connect(updateFullMoonBanner)
+	task.spawn(function()
+		while true do
+			updateFullMoonBanner()
+			task.wait(1)
+		end
 	end)
 end
 

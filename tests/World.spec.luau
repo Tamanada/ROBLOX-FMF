@@ -95,20 +95,27 @@ return function()
 		end)
 	end)
 
-	describe("NPCService crowd target (§3.3 spawnRate, §10.6 cap)", function()
+	describe("NPCService crowd target (§3.3 spawnRate, §2.3 Full Moon, §10.6 cap)", function()
 		it("scales with Hype (1 + Hype/50) and floors", function()
-			-- base 12, night density 1.0
-			expect(NPCService._spawnTarget(0, true)).to.equal(12)
-			expect(NPCService._spawnTarget(100, true)).to.equal(36) -- 12 * (1 + 100/50)
+			-- base 12, night density 1.0, no Full Moon
+			expect(NPCService._spawnTarget(0, true, 1)).to.equal(12)
+			expect(NPCService._spawnTarget(100, true, 1)).to.equal(36) -- 12 * (1 + 100/50)
 		end)
 
 		it("night is a denser crowd than day (§2.2)", function()
-			expect(NPCService._spawnTarget(0, false)).to.equal(4) -- floor(12 * 0.4)
-			expect(NPCService._spawnTarget(0, true) > NPCService._spawnTarget(0, false)).to.equal(true)
+			expect(NPCService._spawnTarget(0, false, 1)).to.equal(4) -- floor(12 * 0.4)
+			expect(NPCService._spawnTarget(0, true, 1) > NPCService._spawnTarget(0, false, 1)).to.equal(true)
+		end)
+
+		it("the Full Moon spawns x3 (§2.3), still under the cap", function()
+			expect(NPCService._spawnTarget(0, true, Economy.FULL_MOON_SPAWN_MULTIPLIER)).to.equal(36) -- 12 * 3
+			expect(NPCService._spawnTarget(50, true, Economy.FULL_MOON_SPAWN_MULTIPLIER)).to.equal(
+				Economy.NPC_MAX_PER_PLOT
+			)
 		end)
 
 		it("never exceeds the per-plot hard cap of 40 (§10.6)", function()
-			expect(NPCService._spawnTarget(1000, true)).to.equal(Economy.NPC_MAX_PER_PLOT)
+			expect(NPCService._spawnTarget(1000, true, 1)).to.equal(Economy.NPC_MAX_PER_PLOT)
 			expect(Economy.NPC_MAX_PER_PLOT).to.equal(40)
 		end)
 	end)
