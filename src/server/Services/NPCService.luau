@@ -23,6 +23,7 @@ local Types = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Typ
 local Economy = require(ReplicatedStorage.Shared.Config.Economy)
 
 local EventService = require(script.Parent.EventService)
+local FullMoonService = require(script.Parent.FullMoonService)
 local PlotService = require(script.Parent.PlotService)
 
 local NPCService = {}
@@ -64,11 +65,12 @@ local started = false
 -- Pure helper (unit-tested in tests/World.spec.luau)
 --------------------------------------------------------------------------
 
--- §3.3 — crowd target = base × (1 + Hype/50) × phase density, capped at the
--- per-plot limit (§10.6). Night is a dense crowd, day is calm (§2.2).
-function NPCService._spawnTarget(hype: number, isNight: boolean): number
+-- §3.3 — crowd target = base × (1 + Hype/50) × phase density × Full Moon
+-- multiplier, capped at the per-plot limit (§10.6). Night is a dense crowd,
+-- day is calm (§2.2); the Full Moon spawns ×3 (§2.3).
+function NPCService._spawnTarget(hype: number, isNight: boolean, fullMoonMultiplier: number): number
 	local density = if isNight then Economy.NPC_NIGHT_DENSITY else Economy.NPC_DAY_DENSITY
-	local target = Economy.NPC_SPAWN_BASE * (1 + hype / Economy.HYPE_SPAWN_DIVISOR) * density
+	local target = Economy.NPC_SPAWN_BASE * (1 + hype / Economy.HYPE_SPAWN_DIVISOR) * density * fullMoonMultiplier
 	return math.min(Economy.NPC_MAX_PER_PLOT, math.floor(target))
 end
 
@@ -215,7 +217,8 @@ end
 --------------------------------------------------------------------------
 
 local function topupCrowd(crowd: PlotCrowd)
-	local target = NPCService._spawnTarget(crowd.data.hype, EventService.IsNight())
+	local fullMoon = if FullMoonService.IsActive() then Economy.FULL_MOON_SPAWN_MULTIPLIER else 1
+	local target = NPCService._spawnTarget(crowd.data.hype, EventService.IsNight(), fullMoon)
 	local deficit = target - #crowd.npcs
 	if deficit <= 0 then
 		return

@@ -14,6 +14,7 @@ local PlotService = require(script.Services.PlotService)
 local EconomyService = require(script.Services.EconomyService)
 local HypeService = require(script.Services.HypeService)
 local EventService = require(script.Services.EventService)
+local FullMoonService = require(script.Services.FullMoonService)
 local NPCService = require(script.Services.NPCService)
 local BuildService = require(script.Services.BuildService)
 
@@ -23,6 +24,7 @@ PlotService.Init()
 EconomyService.Init()
 HypeService.Init()
 EventService.Init() -- §2.2 day/night cycle + §7 cleanup — the world heartbeat
+FullMoonService.Init() -- §2.3 global UTC Full Moon clock + multipliers
 NPCService.Init() -- §2.1 living crowd
 BuildService.Init()
 
@@ -44,8 +46,10 @@ local function onPlayerAdded(player: Player)
 	end
 	EconomyService.SetupPlayer(player, data)
 	BuildService.TrackPlayer(player, data)
-	-- §2.2/§7 — enrol in the cycle's cleanup flashes; §2.1 — start the crowd.
+	-- §2.2/§7 — enrol in the cycle's cleanup flashes; §2.1 — start the crowd;
+	-- §2.3 — count toward Full Moon attendance/rewards.
 	EventService.TrackPlayer(player)
+	FullMoonService.TrackPlayer(player)
 	NPCService.TrackPlayer(player, data)
 end
 
@@ -58,6 +62,7 @@ Players.PlayerRemoving:Connect(function(player: Player)
 	-- Order matters: bank the uncollected pool into the profile BEFORE the
 	-- session is released and saved.
 	NPCService.UntrackPlayer(player)
+	FullMoonService.UntrackPlayer(player)
 	EventService.UntrackPlayer(player)
 	BuildService.UntrackPlayer(player)
 	HypeService.CleanupPlayer(player)
@@ -70,4 +75,4 @@ game:BindToClose(function()
 	DataService.ReleaseAll()
 end)
 
-print("[FMF] Sprint 2 server ready — living world online (day/night ×2, crowd, beach cleanup).")
+print("[FMF] Sprint 3 server ready — Full Moon online (UTC-synced ×5, Moon Shards, sky transform).")

@@ -23,6 +23,7 @@ local Net = require(ReplicatedStorage.Shared.Util.Net)
 local DataService = require(script.Parent.DataService)
 local EconomyService = require(script.Parent.EconomyService)
 local EventService = require(script.Parent.EventService)
+local FullMoonService = require(script.Parent.FullMoonService)
 local HypeService = require(script.Parent.HypeService)
 local PlotService = require(script.Parent.PlotService)
 
@@ -273,11 +274,14 @@ function BuildService.Init()
 		while true do
 			task.wait(Economy.REVENUE_TICK_SECONDS)
 			-- §2.2 — day pays ½ the night rate, so night is ×2. The catalogue
-			-- rates are night rates; the phase multiplier scales them.
+			-- rates are night rates; the phase multiplier scales them. §2.3 —
+			-- the per-player Full Moon multiplier (×5/×2) stacks on top.
 			local phaseMultiplier = EventService.GetRevenueMultiplier()
 			for player, playerRuntime in runtime do
 				if playerRuntime.ratePerMinute > 0 then
-					playerRuntime.uncollected += playerRuntime.ratePerMinute * (Economy.REVENUE_TICK_SECONDS / 60) * phaseMultiplier
+					local fullMoon = FullMoonService.GetRevenueMultiplier(player)
+					local tickShare = Economy.REVENUE_TICK_SECONDS / 60
+					playerRuntime.uncollected += playerRuntime.ratePerMinute * tickShare * phaseMultiplier * fullMoon
 					PlotService.SetPlotAttribute(player, "Uncollected", math.floor(playerRuntime.uncollected))
 				end
 			end

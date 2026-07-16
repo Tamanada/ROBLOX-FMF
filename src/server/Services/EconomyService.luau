@@ -11,6 +11,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Types = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Types"))
+local Economy = require(ReplicatedStorage.Shared.Config.Economy)
 local DataService = require(script.Parent.DataService)
 
 local EconomyService = {}
@@ -43,12 +44,16 @@ local function isValidAmount(amount: number): boolean
 		and amount == math.floor(amount) -- Shells are always integers
 end
 
-local function updateDisplay(player: Player, data: Types.PlayerData)
+local function updateStat(player: Player, statName: string, value: number)
 	local leaderstats = player:FindFirstChild("leaderstats")
-	local shells = if leaderstats ~= nil then leaderstats:FindFirstChild("Shells") else nil
-	if shells ~= nil and shells:IsA("IntValue") then
-		shells.Value = data.shells
+	local stat = if leaderstats ~= nil then leaderstats:FindFirstChild(statName) else nil
+	if stat ~= nil and stat:IsA("IntValue") then
+		stat.Value = value
 	end
+end
+
+local function updateDisplay(player: Player, data: Types.PlayerData)
+	updateStat(player, "Shells", data.shells)
 end
 
 local function auditCredit(player: Player, amount: number)
@@ -64,7 +69,12 @@ local function auditCredit(player: Player, amount: number)
 	end
 	window.credited += amount
 
-	local ceiling = window.theoreticalRatePerMinute * AUDIT_RATE_HEADROOM + AUDIT_FLAT_HEADROOM
+	-- §2.3 — the Full Moon legitimately pays up to ×5 the base rate, so the
+	-- ceiling must include that envelope on top of the collect-batching headroom
+	-- (else top festivals trip the flag every Full Moon). Still catches
+	-- order-of-magnitude injection exploits (§11.4).
+	local ceiling = window.theoreticalRatePerMinute * AUDIT_RATE_HEADROOM * Economy.FULL_MOON_REVENUE_MULTIPLIER_MAX
+		+ AUDIT_FLAT_HEADROOM
 	if window.credited > ceiling then
 		-- §11.4 — flag, audit before any action.
 		warn(
@@ -84,6 +94,12 @@ function EconomyService.SetupPlayer(player: Player, data: Types.PlayerData)
 	shells.Name = "Shells"
 	shells.Value = data.shells
 	shells.Parent = leaderstats
+
+	-- §3.1 — Moon Shards: hard, earn-only currency (never sold for Robux).
+	local moonShards = Instance.new("IntValue")
+	moonShards.Name = "MoonShards"
+	moonShards.Value = data.moonShards
+	moonShards.Parent = leaderstats
 
 	leaderstats.Parent = player
 
@@ -106,6 +122,32 @@ end
 function EconomyService.GetShells(player: Player): number?
 	local data = DataService.Get(player)
 	return if data ~= nil then data.shells else nil
+end
+
+function EconomyService.GetMoonShards(player: Player): number?
+	local data = DataService.Get(player)
+	return if data ~= nil then data.moonShards else nil
+end
+
+-- §3.1 — Moon Shards are earn-only (Full Moon events, achievements, prestige).
+-- No Debit path yet — spending arrives with StaffService/cosmetics (S4+).
+function EconomyService.CreditMoonShards(player: Player, amount: number, reason: string): boolean
+	if not isValidAmount(amount) then
+		warn(`[EconomyService] invalid moon shard credit ({tostring(amount)}) for {player.Name} [{reason}]`)
+		return false
+	end
+	if amount == 0 then
+		return true
+	end
+
+	local data = DataService.Get(player)
+	if data == nil then
+		return false
+	end
+
+	data.moonShards += amount
+	updateStat(player, "MoonShards", data.moonShards)
+	return true
 end
 
 function EconomyService.Credit(player: Player, amount: number, reason: string): boolean
