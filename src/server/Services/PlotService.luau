@@ -2,10 +2,11 @@
 -- server/Services/PlotService.luau — Blueprint §6 / §10.2.
 -- 12 plots per server: assignment on join, release on leave, reload of the
 -- player's saved equipment onto their plot.
--- Sprint 0 scope: equipment is reloaded as placeholder anchored parts —
--- real equipment models/logic belong to BuildService (Sprint 1).
+-- Sprint 1: equipment renders as placeholder anchored parts carrying
+-- display attributes (Index/Level/Broken) — real 3D models are a Studio
+-- placement task (§10.1). BuildService owns all mutations; this service
+-- owns the world representation.
 
-local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 
@@ -17,10 +18,6 @@ local PLOT_COUNT: number = Economy.PLOTS_PER_SERVER -- 12 (§6)
 local PLOT_SIZE = Vector3.new(96, 1, 96)
 local PLOT_GAP = 32
 local PLOTS_PER_ROW = 4
-
--- Save slot key inside PlayerData.plots. The "Extra Plot Slot" Game Pass
--- (§8.1) introduces additional slots in Sprint 5.
-local MAIN_SLOT = "main"
 
 type PlotRuntime = {
 	index: number,
@@ -37,6 +34,9 @@ local plotByPlayer: { [Player]: PlotRuntime } = {}
 local initialized = false
 
 local PlotService = {}
+
+-- Exposed for BuildService's bounds validation (§10.3.2).
+PlotService.PLOT_SIZE = PLOT_SIZE
 
 --------------------------------------------------------------------------
 -- World setup
@@ -113,10 +113,10 @@ function PlotService.Init()
 end
 
 --------------------------------------------------------------------------
--- Equipment reload (Sprint 0: placeholders)
+-- Equipment rendering (Sprint 1: placeholders with display attributes)
 --------------------------------------------------------------------------
 
-local function spawnEquipmentPlaceholder(plot: PlotRuntime, entry: Types.EquipmentInstance)
+local function spawnEquipmentPlaceholder(plot: PlotRuntime, entry: Types.EquipmentInstance, index: number)
 	local part = Instance.new("Part")
 	part.Name = entry.id
 	part.Anchored = true
@@ -127,21 +127,37 @@ local function spawnEquipmentPlaceholder(plot: PlotRuntime, entry: Types.Equipme
 		then Color3.fromRGB(120, 120, 120)
 		else Color3.fromRGB(0, 229, 255) -- néon cyan #00E5FF (§9)
 	part:SetAttribute("EquipmentId", entry.id)
+	part:SetAttribute("Index", index)
 	part:SetAttribute("Level", entry.level)
 	part:SetAttribute("Broken", entry.broken)
 	part.Parent = plot.equipmentFolder
 end
 
-local function loadSavedEquipment(plot: PlotRuntime, data: Types.PlayerData)
-	local slot = data.plots[MAIN_SLOT]
-	if slot == nil then
-		-- First join: initialize the main save slot.
-		data.plots[MAIN_SLOT] = { equipment = {} }
+-- Re-renders the whole equipment folder from the profile data (called by
+-- BuildService after every mutation — buy/upgrade/repair).
+function PlotService.RefreshEquipment(player: Player, data: Types.PlayerData)
+	local plot = plotByPlayer[player]
+	if plot == nil then
 		return
 	end
 
-	for _, entry in slot.equipment do
-		spawnEquipmentPlaceholder(plot, entry)
+	plot.equipmentFolder:ClearAllChildren()
+
+	local slot = data.plots[Economy.MAIN_PLOT_SLOT]
+	if slot == nil then
+		return
+	end
+	for index, entry in slot.equipment do
+		spawnEquipmentPlaceholder(plot, entry, index)
+	end
+end
+
+-- Display-only replication channel (e.g. "Uncollected" — §10.3.4: the
+-- server holds the amounts, the client only displays).
+function PlotService.SetPlotAttribute(player: Player, attribute: string, value: any)
+	local plot = plotByPlayer[player]
+	if plot ~= nil then
+		plot.model:SetAttribute(attribute, value)
 	end
 end
 
@@ -163,7 +179,7 @@ local function teleportToPlot(player: Player, plot: PlotRuntime): RBXScriptConne
 	return connection
 end
 
--- Assigns the first free plot and reloads saved equipment onto it.
+-- Assigns the first free plot and renders saved equipment onto it.
 -- Returns nil if no plot is free (cannot happen while server size == 12).
 function PlotService.Assign(player: Player, data: Types.PlayerData): number?
 	assert(initialized, "[PlotService] Init() must be called before Assign()")
@@ -191,7 +207,12 @@ function PlotService.Assign(player: Player, data: Types.PlayerData): number?
 	plot.model:SetAttribute("OwnerUserId", player.UserId)
 	plotByPlayer[player] = plot
 
-	loadSavedEquipment(plot, data)
+	-- First join: initialize the main save slot.
+	if data.plots[Economy.MAIN_PLOT_SLOT] == nil then
+		data.plots[Economy.MAIN_PLOT_SLOT] = { equipment = {} }
+	end
+
+	PlotService.RefreshEquipment(player, data)
 	plot.characterConnection = teleportToPlot(player, plot)
 
 	return plot.index
@@ -206,6 +227,7 @@ function PlotService.Release(player: Player)
 	plotByPlayer[player] = nil
 	plot.ownerUserId = nil
 	plot.model:SetAttribute("OwnerUserId", nil)
+	plot.model:SetAttribute("Uncollected", nil)
 	plot.equipmentFolder:ClearAllChildren()
 
 	if plot.characterConnection ~= nil then
