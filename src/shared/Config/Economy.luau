@@ -112,4 +112,45 @@ return table.freeze({
 	-- present player: MAX if eligible for the ×5 gate, BASE otherwise.
 	FULL_MOON_SHARDS_MAX = 5,
 	FULL_MOON_SHARDS_BASE = 2,
+
+	------------------------------------------------------------------
+	-- §4 — Zone unlocks (Zone 2 in S4; Zone 3 gate lands in S6)
+	------------------------------------------------------------------
+	-- One-time Shells cost + Hype requirement to unlock a zone. Zone 1 is
+	-- always unlocked. Zone 3 (500k + Hype 75 + prestige/shards) is S6.
+	ZONE_UNLOCKS = {
+		[2] = { shells = 75000, hype = 60 },
+	},
+
+	------------------------------------------------------------------
+	-- §5.1 — Recruitment roll costs (mirrored in Config/Staff banners)
+	------------------------------------------------------------------
+	STAFF_FUSION_COUNT = 3, -- §5.2 — 3 duplicates fuse into 1 higher rarity
+
+	------------------------------------------------------------------
+	-- §4 / §7 — Repair breakage + live events (storm / monkeys / VIP)
+	------------------------------------------------------------------
+	-- §4 — ambient breakage: chance that one working equipment breaks at each
+	-- cycle boundary (weather events add to this — §7 storm).
+	AMBIENT_BREAK_CHANCE = 0.2,
+
+	-- §7 — Tempête tropicale : ~1/45 min, annoncée 60 s avant, 1-3 équipements
+	-- endommagés, revenus −50 % pendant 90 s.
+	STORM_INTERVAL_SECONDS = 2700,
+	STORM_WARNING_SECONDS = 60,
+	STORM_DURATION_SECONDS = 90,
+	STORM_REVENUE_MULTIPLIER = 0.5,
+	STORM_MIN_DAMAGE = 1,
+	STORM_MAX_DAMAGE = 3,
+
+	-- §7 — Singes voleurs : ~1/20 min, volent une part des Shells non collectés.
+	MONKEY_INTERVAL_SECONDS = 1200,
+	MONKEY_STEAL_FRACTION = 0.3,
+
+	-- §7 — Bateau VIP : ~1/30 min si Hype ≥ 50, dépenses ×10 (modélisé comme un
+	-- boost de revenus temporaire sur la durée du passage).
+	VIP_INTERVAL_SECONDS = 1800,
+	VIP_HYPE_REQUIREMENT = 50,
+	VIP_DURATION_SECONDS = 60,
+	VIP_REVENUE_MULTIPLIER = 1.5,
 })

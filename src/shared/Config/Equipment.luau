@@ -52,6 +52,24 @@ local list: { EquipmentDef } = {
 	def("lantern_release_deck", "Lantern Release Deck", 4, 18000, 110, 14, 1),
 	def("neon_dance_floor", "Neon Dance Floor", 4, 30000, 160, 16, 1),
 	def("main_stage_mk1", "Main Stage Mk I", 5, 55000, 260, 22, 1),
+
+	-- §4 Zone 2 — Ban Tai (déblocage : 75 000 Shells + Hype 60).
+	-- 13 items, tiers 3-6, coûts 20k→400k. The Blueprint names 7 items and
+	-- gives ranges only; the full table (6 added names + per-item numbers,
+	-- following §3.2 cost/revenue growth) is a Sprint 4 amendment (2026-07-17).
+	def("pier_boat_taxi_upgrade", "Pier & Boat Taxi Upgrade", 3, 20000, 95, 10, 2),
+	def("coconut_cafe", "Coconut Café", 3, 28000, 120, 11, 2),
+	def("glow_body_art_studio", "Glow Body Art Studio", 3, 38000, 150, 12, 2),
+	def("trampoline_net", "Trampoline Net", 4, 52000, 190, 14, 2),
+	def("beach_volley_arena", "Beach Volley Arena", 4, 70000, 235, 15, 2),
+	def("silent_disco_dome", "Silent Disco Dome", 4, 95000, 290, 17, 2),
+	def("hammock_grove", "Hammock Grove", 4, 125000, 350, 16, 2),
+	def("drone_light_show_pad", "Drone Light Show Pad", 5, 160000, 430, 20, 2),
+	def("tiki_torch_promenade", "Tiki Torch Promenade", 5, 200000, 520, 21, 2),
+	def("lantern_river_walk", "Lantern River Walk", 5, 250000, 620, 23, 2),
+	def("neon_surf_ramp", "Neon Surf Ramp", 5, 300000, 720, 24, 2),
+	def("sunset_yoga_deck", "Sunset Yoga Deck", 6, 350000, 820, 25, 2),
+	def("main_stage_mk2", "Main Stage Mk II", 6, 400000, 950, 30, 2),
 }
 
 local byId: { [string]: EquipmentDef } = {}

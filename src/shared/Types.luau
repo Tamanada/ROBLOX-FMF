@@ -20,7 +20,11 @@ export type PlotData = {
 	equipment: { EquipmentInstance },
 }
 
-export type StaffRarity = "Common" | "Rare" | "Epic" | "Legendary"
+-- One of "Common" | "Rare" | "Epic" | "Legendary". Kept as `string` (not a
+-- singleton union) because Luau widens singleton literals to `string` once they
+-- live in frozen config tables — the union would fight every config read.
+-- Validity is enforced at runtime against Config/Staff membership.
+export type StaffRarity = string
 
 export type StaffEntry = {
 	staffId: string,
@@ -44,6 +48,8 @@ export type PlayerData = {
 	staff: { StaffEntry },
 	stats: PlayerStats,
 	passes: { [string]: boolean },
+	-- §4 — unlocked zones ("1" always unlocked). Added in schema v2 (S4).
+	unlockedZones: { [string]: boolean },
 	lastSeen: number,
 }
 

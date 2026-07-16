@@ -104,6 +104,24 @@ Format : Nom | Tier | Coût (Shells) | Revenu/min (nuit) | Hype | Zone min.
 ### Zone 2 — Ban Tai (déblocage : 75 000 Shells + Hype 60)
 Pier & Boat Taxi Upgrade, Coconut Café, Glow Body Art Studio, Trampoline Net, Silent Disco Dome, Drone Light Show Pad, Main Stage Mk II… (13 items, tiers 3-6, coûts 20k → 400k)
 
+> **Amendement Sprint 4 (17/07/2026) — catalogue Zone 2 complet (contraignant).** Le Blueprint ne nommait que 7 des 13 items sans chiffres. Table complète (6 noms ajoutés + Coût/Rev-min-nuit/Hype par item, suivant la croissance §3.2), source de vérité dans `src/shared/Config/Equipment.luau` :
+>
+> | Équipement | Tier | Coût | Rev/min | Hype |
+> |---|---|---|---|---|
+> | Pier & Boat Taxi Upgrade | 3 | 20 000 | 95 | +10 |
+> | Coconut Café | 3 | 28 000 | 120 | +11 |
+> | Glow Body Art Studio | 3 | 38 000 | 150 | +12 |
+> | Trampoline Net | 4 | 52 000 | 190 | +14 |
+> | Beach Volley Arena *(ajouté)* | 4 | 70 000 | 235 | +15 |
+> | Silent Disco Dome | 4 | 95 000 | 290 | +17 |
+> | Hammock Grove *(ajouté)* | 4 | 125 000 | 350 | +16 |
+> | Drone Light Show Pad | 5 | 160 000 | 430 | +20 |
+> | Tiki Torch Promenade *(ajouté)* | 5 | 200 000 | 520 | +21 |
+> | Lantern River Walk *(ajouté)* | 5 | 250 000 | 620 | +23 |
+> | Neon Surf Ramp *(ajouté)* | 5 | 300 000 | 720 | +24 |
+> | Sunset Yoga Deck *(ajouté)* | 6 | 350 000 | 820 | +25 |
+> | Main Stage Mk II | 6 | 400 000 | 950 | +30 |
+
 ### Zone 3 — Bottle Beach (déblocage : 500 000 Shells + Hype 75 + 1 prestige OU 50 Moon Shards)
 Infinity Fire Show Arena, Bioluminescent Lagoon, Treehouse VIP Deck, Full Moon Amphitheater, Sky Lantern Festival Grounds… (8 items, tiers 6-8, coûts 300k → 5M)
 
@@ -116,6 +134,12 @@ Infinity Fire Show Arena, Bioluminescent Lagoon, Treehouse VIP Deck, Full Moon A
 ### 5.1 Recrutement
 - **Recruitment Board** sur la jetée. Roll : 500 Shells (Common/Rare) ou 5 Moon Shards (Epic garanti min.).
 - **Conformité :** les probabilités de drop sont **affichées en jeu** (transparence type gacha réglementé). Aucun roll direct en Robux.
+
+> **Amendement Sprint 4 (17/07/2026) — odds par bannière (contraignant).** La table §5.2 donne la distribution globale ; le split par bannière n'était pas spécifié. Défini et affiché en jeu :
+> - **Standard** (500 Shells) : Common 75 % · Rare 25 %.
+> - **Premium** (5 Moon Shards, Epic garanti min.) : Epic 90 % · Legendary 10 %.
+>
+> Effet Legendary « +1 min de durée Full Moon » (§5.2) : **différé** — interagit avec l'horloge globale synchronisée (§10.5) ; les effets Legendary revenu global +15 % et +15 Hype sont livrés dès S4.
 
 ### 5.2 Raretés & rôles
 | Rareté | Drop | Exemple | Effet type |
