@@ -70,6 +70,19 @@ local list: { EquipmentDef } = {
 	def("neon_surf_ramp", "Neon Surf Ramp", 5, 300000, 720, 24, 2),
 	def("sunset_yoga_deck", "Sunset Yoga Deck", 6, 350000, 820, 25, 2),
 	def("main_stage_mk2", "Main Stage Mk II", 6, 400000, 950, 30, 2),
+
+	-- §4 Zone 3 — Bottle Beach (déblocage : 500 000 Shells + Hype 75 + 1 prestige
+	-- OU 50 Moon Shards). 8 items, tiers 6-8, coûts 300k→5M. The Blueprint names
+	-- 5 items and gives ranges only; the full table (3 added names + per-item
+	-- numbers, §3.2 growth) is a Sprint 6 amendment (2026-07-17).
+	def("bioluminescent_lagoon", "Bioluminescent Lagoon", 6, 300000, 720, 26, 3),
+	def("treehouse_vip_deck", "Treehouse VIP Deck", 6, 450000, 980, 28, 3),
+	def("infinity_fire_show_arena", "Infinity Fire Show Arena", 7, 700000, 1400, 32, 3),
+	def("sky_lantern_grounds", "Sky Lantern Festival Grounds", 7, 1100000, 2000, 35, 3),
+	def("moonlit_tide_pools", "Moonlit Tide Pools", 7, 1600000, 2700, 34, 3),
+	def("cliffside_sound_garden", "Cliffside Sound Garden", 8, 2400000, 3600, 38, 3),
+	def("full_moon_amphitheater", "Full Moon Amphitheater", 8, 3500000, 5000, 45, 3),
+	def("celestial_main_stage", "Celestial Main Stage", 8, 5000000, 7000, 50, 3),
 }
 
 local byId: { [string]: EquipmentDef } = {}

@@ -125,6 +125,19 @@ Pier & Boat Taxi Upgrade, Coconut Café, Glow Body Art Studio, Trampoline Net, S
 ### Zone 3 — Bottle Beach (déblocage : 500 000 Shells + Hype 75 + 1 prestige OU 50 Moon Shards)
 Infinity Fire Show Arena, Bioluminescent Lagoon, Treehouse VIP Deck, Full Moon Amphitheater, Sky Lantern Festival Grounds… (8 items, tiers 6-8, coûts 300k → 5M)
 
+> **Amendement Sprint 6 (17/07/2026) — catalogue Zone 3 complet (contraignant).** 3 noms ajoutés + chiffres par item (§3.2), source dans `src/shared/Config/Equipment.luau` :
+>
+> | Équipement | Tier | Coût | Rev/min | Hype |
+> |---|---|---|---|---|
+> | Bioluminescent Lagoon | 6 | 300 000 | 720 | +26 |
+> | Treehouse VIP Deck | 6 | 450 000 | 980 | +28 |
+> | Infinity Fire Show Arena | 7 | 700 000 | 1 400 | +32 |
+> | Sky Lantern Festival Grounds | 7 | 1 100 000 | 2 000 | +35 |
+> | Moonlit Tide Pools *(ajouté)* | 7 | 1 600 000 | 2 700 | +34 |
+> | Cliffside Sound Garden *(ajouté)* | 8 | 2 400 000 | 3 600 | +38 |
+> | Full Moon Amphitheater | 8 | 3 500 000 | 5 000 | +45 |
+> | Celestial Main Stage *(ajouté)* | 8 | 5 000 000 | 7 000 | +50 |
+
 **Règle contraignante :** chaque équipement a 3 niveaux d'upgrade (revenu ×1.5/niveau, coût = 60 % du prix d'achat/niveau) et un état **Repair** (casse aléatoire pondérée par les events météo, coût réparation = 10 % du prix, non réparé = revenu 0 + malus Hype).
 
 ---

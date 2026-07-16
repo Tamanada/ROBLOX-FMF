@@ -116,11 +116,20 @@ return table.freeze({
 	------------------------------------------------------------------
 	-- §4 — Zone unlocks (Zone 2 in S4; Zone 3 gate lands in S6)
 	------------------------------------------------------------------
-	-- One-time Shells cost + Hype requirement to unlock a zone. Zone 1 is
-	-- always unlocked. Zone 3 (500k + Hype 75 + prestige/shards) is S6.
+	-- One-time Shells cost + Hype requirement to unlock a zone. Zone 1 is always
+	-- unlocked. Zone 3 (§4) also needs 1 prestige OR 50 Moon Shards (paid if the
+	-- player has no prestige yet).
 	ZONE_UNLOCKS = {
-		[2] = { shells = 75000, hype = 60 },
+		[2] = { shells = 75000, hype = 60, requiresPrestige = 0, altMoonShards = 0 },
+		[3] = { shells = 500000, hype = 75, requiresPrestige = 1, altMoonShards = 50 },
 	},
+
+	-- §2.3 — Prestige ("Season Reset"): permanent +10 % revenue/prestige,
+	-- capped at ×2.5.
+	PRESTIGE_MULTIPLIER_PER = 0.1,
+	PRESTIGE_MULTIPLIER_CAP = 2.5,
+	-- The last beach must be reached to prestige ("au niveau max d'une plage").
+	PRESTIGE_REQUIRED_ZONE = 3,
 
 	------------------------------------------------------------------
 	-- §5.1 — Recruitment roll costs (mirrored in Config/Staff banners)
