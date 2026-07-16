@@ -104,6 +104,31 @@ Tycoon Roblox — Koh Phangan. **[`docs/BLUEPRINT.md`](docs/BLUEPRINT.md) est le
 - **`Config/Monetization.luau`** : nouveau fichier config (principe config-driven §10.3.3, hors liste illustrative §10.2).
 - **Différés** : Extra Plot Slot (§8.1 — persistance multi-plot) et bonus « +10 % Shells sur achats en visite » (§6 — modèle de dépense inter-plot) ; la visite livre téléport + quête + rating + bonus ami.
 
+### Sprint 6 (Polish & launch) ✅
+
+| Tâche | Statut |
+|---|---|
+| **Zone 3 — Bottle Beach** §4 — 8 items (tiers 6-8, 300k→5M), déblocage 500k 🐚 + Hype 75 + (1 prestige **OU** 50 🌕) | ✅ |
+| **Prestige "Season Reset"** §2.3 — au niveau max (Zone 3), reset festival → +10 %/prestige permanent (cap ×2.5) ; garde staff/🌕/pass/rating | ✅ |
+| **Leaderboard** §6 — hub trié par note (top festivals en tête, rang affiché) | ✅ |
+| **Onboarding** — panneau de bienvenue première session (boucle cœur en 4 étapes) | ✅ |
+| Catalogue complet **34 items** (§4 — 13 + 13 + 8) ; multiplicateur prestige appliqué au join (mult. externe) | ✅ |
+| Tests TestEZ — courbe prestige (+10 %/cap ×2.5), catalogue Zone 3, gate de déblocage (`tests/Prestige.spec.luau`) | ✅ |
+
+**DoD S6 :** « Soft launch privé → itération metrics → launch public ». Le build de contenu est complet (3 zones, prestige, leaderboard, onboarding). Restent **hors-code** (Studio/marketing) : icônes + thumbnails + page produit, et le processus de soft-launch/itération metrics (KPIs §12).
+
+**Amendement Blueprint §4 (17/07/2026) :** catalogue Zone 3 complet (3 noms ajoutés + chiffres par item, croissance §3.2).
+
+---
+
+## Roadmap §12 — état
+
+| Sprint | Statut |
+|---|---|
+| S0 Fondations · S1 Boucle cœur · S2 Monde vivant · S3 Full Moon · S4 Profondeur · S5 Social & monétisation · S6 Polish & launch | ✅ livrés |
+
+Restes hors-code pour le launch : IDs d'assets Robux (Game Passes / Dev Products) + audio libres de droits + modèles 3D à câbler dans Studio (§10.1), icônes/thumbnails/page produit, et cross-server v1.1 (MessagingService : annonces + leaderboards globaux, §10.5).
+
 ## Setup
 
 ```sh

@@ -777,18 +777,33 @@ function UIController.Start()
 		if container == nil then
 			return
 		end
+
+		-- §6 — leaderboard: other festivals ranked by rating (top first).
+		local entries = {}
 		for _, plotModel in container:GetChildren() do
 			local ownerId = plotModel:GetAttribute("OwnerUserId")
 			local plotIndex = plotModel:GetAttribute("PlotIndex")
-			if type(ownerId) ~= "number" or type(plotIndex) ~= "number" or ownerId == player.UserId then
-				continue
+			if type(ownerId) == "number" and type(plotIndex) == "number" and ownerId ~= player.UserId then
+				local rating = plotModel:GetAttribute("Rating")
+				table.insert(entries, {
+					ownerId = ownerId,
+					plotIndex = plotIndex,
+					rating = if type(rating) == "number" then rating else 0,
+				})
 			end
-			local rating = plotModel:GetAttribute("Rating")
-			local stars = if type(rating) == "number" and rating > 0 then string.format(" • %.1f★", rating) else ""
+		end
+		table.sort(entries, function(a, b)
+			return a.rating > b.rating
+		end)
+
+		for rank, entry in entries do
+			local ownerId = entry.ownerId
+			local plotIndex = entry.plotIndex
+			local stars = if entry.rating > 0 then string.format(" • %.1f★", entry.rating) else ""
 
 			local row = create("Frame", {
 				Size = UDim2.new(1, 0, 0, 52),
-				LayoutOrder = plotIndex,
+				LayoutOrder = rank,
 				BackgroundColor3 = Color3.fromRGB(20, 45, 85),
 				BorderSizePixel = 0,
 			}, hubList)
@@ -801,7 +816,7 @@ function UIController.Start()
 				TextSize = 13,
 				TextXAlignment = Enum.TextXAlignment.Left,
 				TextColor3 = COLOR_WHITE,
-				Text = `Festival #{plotIndex}{stars}`,
+				Text = `#{rank}  Festival {plotIndex}{stars}`,
 			}, row)
 			local visitButton = create("TextButton", {
 				AnchorPoint = Vector2.new(1, 0),
@@ -846,6 +861,96 @@ function UIController.Start()
 
 	makeToggle("💎", 1, storePanel)
 	makeToggle("🌐", 2, hubPanel)
+
+	----------------------------------------------------------------------
+	-- Prestige (§2.3) — appears once Bottle Beach (Zone 3) is reached.
+	----------------------------------------------------------------------
+	local prestigeButton = create("TextButton", {
+		Name = "Prestige",
+		Position = UDim2.fromOffset(12, 108),
+		Size = UDim2.fromOffset(190, 34),
+		BackgroundColor3 = COLOR_DANGER,
+		BorderSizePixel = 0,
+		Font = Enum.Font.GothamBold,
+		TextSize = 14,
+		TextColor3 = COLOR_WHITE,
+		Text = "🌟 Prestige",
+		Visible = false,
+	}, gui) :: TextButton
+	create("UICorner", { CornerRadius = UDim.new(0, 8) }, prestigeButton)
+	prestigeButton.Activated:Connect(function()
+		Net.Client.Fire("RequestPrestige")
+	end)
+
+	local function refreshPrestige()
+		local maxZone = player:GetAttribute("MaxUnlockedZone")
+		prestigeButton.Visible = type(maxZone) == "number" and maxZone >= Economy.PRESTIGE_REQUIRED_ZONE
+		local count = player:GetAttribute("PrestigeCount")
+		local n = if type(count) == "number" then count else 0
+		prestigeButton.Text = if n > 0 then `🌟 Prestige (Lv {n})` else "🌟 Prestige"
+	end
+	player:GetAttributeChangedSignal("MaxUnlockedZone"):Connect(refreshPrestige)
+	player:GetAttributeChangedSignal("PrestigeCount"):Connect(refreshPrestige)
+	refreshPrestige()
+
+	----------------------------------------------------------------------
+	-- Onboarding (§12 S6) — a one-time welcome for a brand-new festival.
+	----------------------------------------------------------------------
+	task.spawn(function()
+		local plotModel = waitForMyPlot()
+		local equipmentFolder = plotModel:WaitForChild("Equipment")
+		-- Heuristic "new player": only the gifted campfire on the plot.
+		if #equipmentFolder:GetChildren() > 1 then
+			return
+		end
+		local welcome = create("Frame", {
+			Name = "Welcome",
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.fromScale(0.5, 0.5),
+			Size = UDim2.fromOffset(360, 210),
+			BackgroundColor3 = COLOR_NAVY,
+			BackgroundTransparency = 0.05,
+			BorderSizePixel = 0,
+		}, gui)
+		create("UICorner", { CornerRadius = UDim.new(0, 12) }, welcome)
+		create("UIStroke", { Color = COLOR_GOLD, Thickness = 1.5, Transparency = 0.2 }, welcome)
+		create("TextLabel", {
+			Position = UDim2.fromOffset(12, 12),
+			Size = UDim2.new(1, -24, 0, 30),
+			BackgroundTransparency = 1,
+			Font = Enum.Font.GothamBlack,
+			TextSize = 20,
+			TextColor3 = COLOR_GOLD,
+			Text = "🌕 Welcome to Full Moon Festival!",
+		}, welcome)
+		create("TextLabel", {
+			Position = UDim2.fromOffset(16, 48),
+			Size = UDim2.new(1, -32, 1, -100),
+			BackgroundTransparency = 1,
+			Font = Enum.Font.GothamMedium,
+			TextSize = 14,
+			TextColor3 = COLOR_WHITE,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			TextYAlignment = Enum.TextYAlignment.Top,
+			TextWrapped = true,
+			Text = "1. Tap 🏗️ Build (right) to place your first stands.\n2. Watch the crowd arrive — revenue fills your Collect button.\n3. Tap Collect 🐚 and reinvest in upgrades & staff.\n4. Every night pays ×2. Every 2 hours: the Full Moon 🌕.",
+		}, welcome)
+		local dismiss = create("TextButton", {
+			AnchorPoint = Vector2.new(0.5, 1),
+			Position = UDim2.new(0.5, 0, 1, -12),
+			Size = UDim2.fromOffset(200, 36),
+			BackgroundColor3 = COLOR_GOLD,
+			BorderSizePixel = 0,
+			Font = Enum.Font.GothamBold,
+			TextSize = 16,
+			TextColor3 = COLOR_NAVY,
+			Text = "Let's go! 🎉",
+		}, welcome) :: TextButton
+		create("UICorner", { CornerRadius = UDim.new(0, 10) }, dismiss)
+		dismiss.Activated:Connect(function()
+			welcome:Destroy()
+		end)
+	end)
 end
 
 return UIController
