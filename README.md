@@ -28,6 +28,24 @@ Tycoon Roblox — Koh Phangan. **[`docs/BLUEPRINT.md`](docs/BLUEPRINT.md) est le
 
 **DoD S1 :** boucle achat→revenu→réinvestissement jouable. Amendement Blueprint §3.2 : solde de départ 750 Shells (hook D0 : campfire offert + 3 achats tier 1 immédiats). La validation « vivre une nuit complète » du hook D0 requiert le cycle jour/nuit (Sprint 2).
 
+### Sprint 2 (Monde vivant) ✅
+
+| Tâche | Statut |
+|---|---|
+| `EventService` — cycle jour/nuit §2.2 (16 min = 10 j / 6 n), phase répliquée (attributs Workspace), horloge par serveur | ✅ |
+| Revenus nuit ×2 §2.2 — `BuildService` module l'accrual par le multiplicateur de phase (jour ×0.5 du taux nuit → nuit ×2) | ✅ |
+| `NPCService` — foule de fêtards (arrivée→équipement→départ), densité §3.3 `×(1+Hype/50)` × phase, cap 40/plot §10.6, 1 seul Heartbeat, LOD > 50 studs | ✅ |
+| `HypeService` v2 — modificateur propreté/decay §3.3 (+5 cleanup, −5/cycle si sale ou cassé), clamp 0-100 | ✅ |
+| Beach Cleanup Flash §7 — 10 déchets après chaque nuit, 60 s, +5 Hype (ProximityPrompt, validé serveur) | ✅ |
+| `AmbienceController` client §9 — lighting jour/nuit (tween), crossfade audio piloté Hype, HUD phase + bannière cleanup | ✅ |
+| Tests TestEZ — cycle/phase/multiplicateur, Hype modifier, cleanup, cible de foule NPC (`tests/World.spec.luau`) | ✅ |
+
+**DoD S2 :** « La plage vit, revenus nuit ×2 fonctionnels ». Décisions d'implémentation (dans le cadre de §10.2, sans changer de valeur contraignante) :
+- Le cycle jour/nuit vit dans **`EventService`** — le service « monde vivant » de §7 (le Beach Cleanup y est un event §7). La météo / singes / VIP (§7) s'y ajoutent au Sprint 4.
+- Les **NPC visualisent** le débit piloté par le Hype ; le revenu autoritatif reste l'accrual taux/min §4 de `BuildService` (économie serveur-autoritaire §10.3) — foule et revenu sont deux vues du même signal Hype, sans laisser le spawn NPC piloter (ni exploiter) l'économie.
+- Le modificateur de propreté/decay du Hype est **runtime (non persisté)** — aucun bump de schéma `dataVersion`.
+- Les `SoundId` d'ambiance sont laissés vides : boucles libres de droits assignées dans Studio via l'AssetRegistry (§9/§10.1 — jamais de musique commerciale réelle).
+
 ## Setup
 
 ```sh
