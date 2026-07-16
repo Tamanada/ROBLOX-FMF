@@ -30,10 +30,10 @@ return function()
 		DataService.Init({ profileStore = MockProfileStore, storeName = "TestPlayerData" })
 	end)
 
-	describe("TEMPLATE (défauts du schéma v1 — §10.4)", function()
-		it("carries every v1 field with its default", function()
+	describe("TEMPLATE (défauts du schéma v2 — §10.4)", function()
+		it("carries every field with its default", function()
 			local template = DataService.TEMPLATE
-			expect(template.dataVersion).to.equal(1)
+			expect(template.dataVersion).to.equal(2)
 			-- §3.2 amendment (Sprint 1): starting balance enables the D0 hook.
 			expect(template.shells).to.equal(Economy.STARTING_SHELLS)
 			expect(template.moonShards).to.equal(0)
@@ -45,6 +45,9 @@ return function()
 			expect(template.stats.fullMoonsAttended).to.equal(0)
 			expect(template.stats.visits).to.equal(0)
 			expect(type(template.passes)).to.equal("table")
+			-- §4 (schema v2) — Zone 1 unlocked from the start.
+			expect(type(template.unlockedZones)).to.equal("table")
+			expect(template.unlockedZones["1"]).to.equal(true)
 			expect(template.lastSeen).to.equal(0)
 		end)
 
@@ -162,6 +165,9 @@ return function()
 			expect(data.moonShards).to.equal(0) -- missing keys filled in
 			expect(data.stats.visits).to.equal(0)
 			expect(type(data.passes)).to.equal("table")
+			-- §4 — the v1→v2 migration unlocks Zone 1 and stamps the version.
+			expect(data.dataVersion).to.equal(2)
+			expect(data.unlockedZones["1"]).to.equal(true)
 
 			DataService.Release(player)
 		end)

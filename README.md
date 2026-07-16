@@ -62,6 +62,28 @@ Tycoon Roblox — Koh Phangan. **[`docs/BLUEPRINT.md`](docs/BLUEPRINT.md) est le
 
 **Amendements Blueprint §2.3 (17/07/2026) :** (1) récompense contraignante par Full Moon = **5 Moon Shards** si éligible au ×5, **2** sinon (le montant était non spécifié) ; (2) la sous-condition « 1 staff actif par zone » est **satisfaite par défaut** (prédicat enfichable) jusqu'à `StaffService` (Sprint 4) — les deux autres conditions du gate sont pleinement évaluées dès S3.
 
+### Sprint 4 (Profondeur) ✅
+
+| Tâche | Statut |
+|---|---|
+| `StaffService` §5 — recrutement 2 bannières (500 🐚 C/R, 5 🌕 Epic-min), **odds affichés en jeu** (§5.1/§11.2), assignation par zone, **fusion 3→1** (sink de doublons) | ✅ |
+| Effets staff §5.2 — multiplicateur de revenu (poussé vers `BuildService`) + Hype (poussé vers `HypeService`), sans cycle de dépendances | ✅ |
+| Repair/casse §4 — casse ambiante par cycle + tempête ; réparation via `RequestRepair` (S1) ; revenu 0 + malus Hype non réparé | ✅ |
+| `EventService` §7 — **tempête** (alerte 60 s, 1-3 dégâts, −50 % 90 s), **singes** (vol du pool non collecté), **bateau VIP** (×1.5 revenus si Hype ≥ 50) | ✅ |
+| **Zone 2 — Ban Tai** §4 — 13 items (tiers 3-6, 20k→400k), déblocage 75k 🐚 + Hype 60 ; schéma **v2 + migration** `unlockedZones` | ✅ |
+| Full Moon gate §2.3 — prédicat « 1 staff/zone » **réellement câblé** (injection dans `FullMoonService`) | ✅ |
+| Client — panneau recrutement (odds), collection staff (assign/fusion), boutique zone-aware + bouton de déblocage, Moon Shards au HUD | ✅ |
+| Tests TestEZ — odds de bannière (somme = 1), roll de rareté, effets/fusion staff, gate zone 2, migration v2, catalogue zone 2 (`tests/Staff.spec.luau`) | ✅ |
+
+**DoD S4 :** « Session 45 min sans friction, sinks fonctionnels ». Les sinks : rolls (Shells/Moon Shards) et fusion 3→1 des doublons ; la progression Zone 2 repousse le mur ; tempêtes/singes/casse créent la gestion de friction.
+
+**Décisions & amendements S4 (17/07/2026) :**
+- **Catalogue Zone 2** (§4) : le Blueprint nomme 7 des 13 items sans chiffres ; les 6 noms ajoutés + tous les nombres suivent la croissance §3.2 (contraignant, documenté dans `Config/Equipment.luau`).
+- **Odds par bannière** (§5.1) : §5 donne la table globale (60/30/9/1) et 2 bannières mais pas le split par bannière → défini (Standard 75/25, Premium 90/10 Epic-min) et **affiché en jeu**.
+- **`StaffRarity` = `string`** (pas union de singletons) : Luau élargit les littéraux singletons à `string` dans les tables `table.freeze` de config ; la validité est vérifiée au runtime contre `Config/Staff`.
+- **Effet Legendary « +1 min Full Moon »** (§5.2) : **différé** (interagit avec l'horloge globale synchronisée §10.5) ; les effets Legendary revenu global + Hype sont livrés.
+- **Approximation zone/global** : « revenu de zone » vs « global » collapse sur le taux mono-plot actuel (documenté ; à raffiner avec le split de taux par zone).
+
 ## Setup
 
 ```sh

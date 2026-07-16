@@ -31,11 +31,17 @@ return function()
 			{ "main_stage_mk1", 5, 55000, 260, 22 },
 		}
 
-		it("contains exactly the 13 Zone 1 items", function()
-			expect(#Equipment.list).to.equal(13)
+		it("contains the 13 Zone 1 items (plus Zone 2 from S4)", function()
+			local zone1, zone2 = 0, 0
 			for _, def in Equipment.list do
-				expect(def.zone).to.equal(1)
+				if def.zone == 1 then
+					zone1 += 1
+				elseif def.zone == 2 then
+					zone2 += 1
+				end
 			end
+			expect(zone1).to.equal(13)
+			expect(zone2).to.equal(13) -- §4 Zone 2 — Ban Tai (S4 amendment)
 		end)
 
 		it("matches the §4 table value for value", function()

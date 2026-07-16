@@ -11,7 +11,9 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 
 local Net = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Util"):WaitForChild("Net"))
+local Economy = require(ReplicatedStorage.Shared.Config.Economy)
 local Equipment = require(ReplicatedStorage.Shared.Config.Equipment)
+local Staff = require(ReplicatedStorage.Shared.Config.Staff)
 local EconomyMath = require(ReplicatedStorage.Shared.Util.EconomyMath)
 local Formatter = require(ReplicatedStorage.Shared.Util.Formatter)
 
@@ -303,26 +305,65 @@ function UIController.Start()
 				)
 		end
 
-		for order, def in Equipment.list do
-			if def.zone ~= 1 or def.cost <= 0 then
-				continue
-			end
-			local button = create("TextButton", {
-				Size = UDim2.new(1, 0, 0, 40),
-				LayoutOrder = order,
-				BackgroundColor3 = Color3.fromRGB(20, 45, 85),
-				BorderSizePixel = 0,
-				Font = Enum.Font.GothamMedium,
-				TextSize = 14,
-				TextColor3 = COLOR_WHITE,
-				TextXAlignment = Enum.TextXAlignment.Left,
-				Text = `  {def.displayName}\n  🐚 {Formatter.abbreviate(def.cost)}  •  +{def.revenuePerMinuteNight}/min`,
-			}, shopList) :: TextButton
-			create("UICorner", { CornerRadius = UDim.new(0, 8) }, button)
-			button.Activated:Connect(function()
-				Net.Client.Fire("RequestBuy", def.id, nextSlotCFrame())
-			end)
+		-- §4 — the shop shows every equipment in an UNLOCKED zone, plus an
+		-- unlock button for the next zone. Rebuilt when MaxUnlockedZone changes.
+		local function currentMaxZone(): number
+			local zone = player:GetAttribute("MaxUnlockedZone")
+			return if type(zone) == "number" then zone else 1
 		end
+
+		local function rebuildShop()
+			for _, child in shopList:GetChildren() do
+				if child:IsA("TextButton") then
+					child:Destroy()
+				end
+			end
+
+			local maxZone = currentMaxZone()
+			for order, def in Equipment.list do
+				if def.cost <= 0 or def.zone > maxZone then
+					continue
+				end
+				local button = create("TextButton", {
+					Size = UDim2.new(1, 0, 0, 40),
+					LayoutOrder = order,
+					BackgroundColor3 = Color3.fromRGB(20, 45, 85),
+					BorderSizePixel = 0,
+					Font = Enum.Font.GothamMedium,
+					TextSize = 14,
+					TextColor3 = COLOR_WHITE,
+					TextXAlignment = Enum.TextXAlignment.Left,
+					Text = `  {def.displayName}\n  🐚 {Formatter.abbreviate(def.cost)}  •  +{def.revenuePerMinuteNight}/min`,
+				}, shopList) :: TextButton
+				create("UICorner", { CornerRadius = UDim.new(0, 8) }, button)
+				button.Activated:Connect(function()
+					Net.Client.Fire("RequestBuy", def.id, nextSlotCFrame())
+				end)
+			end
+
+			-- Next-zone unlock (§4). Server re-validates cost + Hype (§10.3).
+			local nextZone = maxZone + 1
+			local req = Economy.ZONE_UNLOCKS[nextZone]
+			if req ~= nil then
+				local unlockButton = create("TextButton", {
+					Size = UDim2.new(1, 0, 0, 44),
+					LayoutOrder = 1000,
+					BackgroundColor3 = COLOR_GOLD,
+					BorderSizePixel = 0,
+					Font = Enum.Font.GothamBold,
+					TextSize = 13,
+					TextColor3 = COLOR_NAVY,
+					Text = `🔓 Unlock Zone {nextZone}\n🐚 {Formatter.abbreviate(req.shells)} • needs Hype {req.hype}`,
+				}, shopList) :: TextButton
+				create("UICorner", { CornerRadius = UDim.new(0, 8) }, unlockButton)
+				unlockButton.Activated:Connect(function()
+					Net.Client.Fire("RequestUnlockZone", nextZone)
+				end)
+			end
+		end
+
+		player:GetAttributeChangedSignal("MaxUnlockedZone"):Connect(rebuildShop)
+		rebuildShop()
 
 		-- Owned list rebuild (server refreshes recreate the parts).
 		local rebuildPending = false
@@ -420,6 +461,167 @@ function UIController.Start()
 		equipmentFolder.ChildAdded:Connect(rebuildOwned)
 		equipmentFolder.ChildRemoved:Connect(rebuildOwned)
 		rebuildOwned()
+	end)
+
+	----------------------------------------------------------------------
+	-- Bottom-left: Recruitment + Staff (§5). Drop odds are DISPLAYED in-game
+	-- (§5.1 / §11.2 — regulated-gacha transparency). All rolls are intents;
+	-- the server debits currency and decides the result (§10.3).
+	----------------------------------------------------------------------
+	local RARITY_COLORS: { [string]: Color3 } = {
+		Common = Color3.fromRGB(180, 190, 200),
+		Rare = COLOR_CYAN,
+		Epic = COLOR_DANGER,
+		Legendary = COLOR_GOLD,
+	}
+
+	local staffFrame = create("Frame", {
+		Name = "Staff",
+		AnchorPoint = Vector2.new(0, 1),
+		Position = UDim2.new(0, 12, 1, -12),
+		Size = UDim2.fromOffset(280, 300),
+		BackgroundColor3 = COLOR_NAVY,
+		BackgroundTransparency = 0.15,
+		BorderSizePixel = 0,
+	}, gui)
+	create("UICorner", { CornerRadius = UDim.new(0, 10) }, staffFrame)
+	create("TextLabel", {
+		Position = UDim2.fromOffset(0, 6),
+		Size = UDim2.new(1, 0, 0, 22),
+		BackgroundTransparency = 1,
+		Font = Enum.Font.GothamBold,
+		TextSize = 17,
+		TextColor3 = COLOR_GOLD,
+		Text = "👷 Recruitment",
+	}, staffFrame)
+
+	local function oddsText(banner: any): string
+		local parts = {}
+		for _, rarity in { "Common", "Rare", "Epic", "Legendary" } do
+			local probability = banner.odds[rarity]
+			if probability ~= nil then
+				table.insert(parts, `{rarity} {math.floor(probability * 100 + 0.5)}%`)
+			end
+		end
+		return table.concat(parts, " · ")
+	end
+
+	for bannerOrder, banner in Staff.banners do
+		local symbol = if banner.costCurrency == "moonShards" then "🌕" else "🐚"
+		local rollButton = create("TextButton", {
+			Position = UDim2.fromOffset(8, 30 + (bannerOrder - 1) * 46),
+			Size = UDim2.new(1, -16, 0, 40),
+			BackgroundColor3 = Color3.fromRGB(20, 45, 85),
+			BorderSizePixel = 0,
+			Font = Enum.Font.GothamMedium,
+			TextSize = 12,
+			TextColor3 = COLOR_WHITE,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			Text = `  {banner.displayName} — {symbol}{banner.cost}\n  {oddsText(banner)}`,
+		}, staffFrame) :: TextButton
+		create("UICorner", { CornerRadius = UDim.new(0, 8) }, rollButton)
+		rollButton.Activated:Connect(function()
+			Net.Client.Fire("RequestRoll", banner.id)
+		end)
+	end
+
+	local staffList = create("ScrollingFrame", {
+		Position = UDim2.fromOffset(8, 128),
+		Size = UDim2.new(1, -16, 1, -136),
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		ScrollBarThickness = 4,
+		CanvasSize = UDim2.fromOffset(0, 0),
+		AutomaticCanvasSize = Enum.AutomaticSize.Y,
+	}, staffFrame) :: ScrollingFrame
+	create("UIListLayout", {
+		Padding = UDim.new(0, 4),
+		SortOrder = Enum.SortOrder.LayoutOrder,
+	}, staffList)
+
+	local function maxZone(): number
+		local zone = player:GetAttribute("MaxUnlockedZone")
+		return if type(zone) == "number" then zone else 1
+	end
+
+	Net.Client.On("StaffState", function(roster: any)
+		for _, child in staffList:GetChildren() do
+			if child:IsA("Frame") then
+				child:Destroy()
+			end
+		end
+		if type(roster) ~= "table" then
+			return
+		end
+
+		-- Duplicate counts for the fusion sink (§5.2 — 3 → 1).
+		local counts: { [string]: number } = {}
+		for _, entry in roster do
+			counts[entry.staffId] = (counts[entry.staffId] or 0) + 1
+		end
+
+		for _, entry in roster do
+			local def = Staff.byId[entry.staffId]
+			if def == nil then
+				continue
+			end
+			local row = create("Frame", {
+				Size = UDim2.new(1, 0, 0, 30),
+				LayoutOrder = entry.index,
+				BackgroundColor3 = Color3.fromRGB(20, 45, 85),
+				BorderSizePixel = 0,
+			}, staffList)
+			create("UICorner", { CornerRadius = UDim.new(0, 6) }, row)
+
+			local zoneSuffix = if entry.assignedZone ~= nil then ` • Z{entry.assignedZone}` else ""
+			create("TextLabel", {
+				Position = UDim2.fromOffset(6, 0),
+				Size = UDim2.new(1, -120, 1, 0),
+				BackgroundTransparency = 1,
+				Font = Enum.Font.GothamMedium,
+				TextSize = 12,
+				TextXAlignment = Enum.TextXAlignment.Left,
+				TextColor3 = RARITY_COLORS[entry.rarity] or COLOR_WHITE,
+				Text = `{def.displayName}{zoneSuffix}`,
+			}, row)
+
+			-- Assign: cycles 0 (off) → 1 → … → maxZone → 0. Server validates.
+			local assignButton = create("TextButton", {
+				AnchorPoint = Vector2.new(1, 0.5),
+				Position = UDim2.new(1, -60, 0.5, 0),
+				Size = UDim2.fromOffset(50, 24),
+				BackgroundColor3 = COLOR_CYAN,
+				BorderSizePixel = 0,
+				Font = Enum.Font.GothamBold,
+				TextSize = 11,
+				TextColor3 = COLOR_NAVY,
+				Text = "Assign",
+			}, row) :: TextButton
+			create("UICorner", { CornerRadius = UDim.new(0, 6) }, assignButton)
+			assignButton.Activated:Connect(function()
+				local current = tonumber(entry.assignedZone) or 0
+				local nextZone = if current >= maxZone() then 0 else current + 1
+				Net.Client.Fire("RequestAssignStaff", entry.index, nextZone)
+			end)
+
+			if (counts[entry.staffId] or 0) >= Economy.STAFF_FUSION_COUNT and Staff.fusionNext[entry.rarity] ~= nil then
+				local fuseButton = create("TextButton", {
+					AnchorPoint = Vector2.new(1, 0.5),
+					Position = UDim2.new(1, -6, 0.5, 0),
+					Size = UDim2.fromOffset(48, 24),
+					BackgroundColor3 = COLOR_GOLD,
+					BorderSizePixel = 0,
+					Font = Enum.Font.GothamBold,
+					TextSize = 11,
+					TextColor3 = COLOR_NAVY,
+					Text = "Fuse",
+				}, row) :: TextButton
+				create("UICorner", { CornerRadius = UDim.new(0, 6) }, fuseButton)
+				fuseButton.Activated:Connect(function()
+					Net.Client.Fire("RequestFuseStaff", entry.staffId)
+				end)
+			end
+		end
 	end)
 end
 
