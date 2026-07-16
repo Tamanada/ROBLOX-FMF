@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  analyze:
+    name: Luau strict analysis & style
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install toolchain (rokit)
+        uses: CompeyDev/setup-rokit@v0.1.2
+
+      - name: Install packages
+        run: wally install
+
+      - name: Generate Rojo sourcemap
+        run: rojo sourcemap default.project.json -o sourcemap.json
+
+      - name: Download Roblox type definitions
+        run: curl -sO https://raw.githubusercontent.com/JohnnyMorganz/luau-lsp/main/scripts/globalTypes.d.luau
+
+      - name: Analyze (luau-lsp, strict)
+        run: |
+          luau-lsp analyze \
+            --defs=globalTypes.d.luau \
+            --sourcemap=sourcemap.json \
+            --ignore "Packages/**" \
+            --ignore "src/server/Packages/**" \
+            src tests
+
+      - name: Style check (StyLua)
+        run: stylua --check src tests
+
+  # TestEZ specs run inside Roblox Studio (see README) — headless execution
+  # requires run-in-roblox + a Studio install, which GitHub-hosted runners
+  # don't provide. Revisit with a self-hosted runner if needed.
