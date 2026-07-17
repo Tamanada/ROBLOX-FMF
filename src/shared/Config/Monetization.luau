@@ -33,16 +33,28 @@ local passes: { PassDef } = {
 	table.freeze({
 		id = "auto_collect",
 		displayName = "Auto-Collect",
-		gamePassId = 0,
+		gamePassId = 1917698420,
 		robux = 249,
 		effect = "autoCollect",
 	}),
-	table.freeze({ id = "vip_islander", displayName = "VIP Islander", gamePassId = 0, robux = 399, effect = "vip" }),
-	table.freeze({ id = "pyro_master", displayName = "Pyro Master", gamePassId = 0, robux = 299, effect = "pyro" }),
+	table.freeze({
+		id = "vip_islander",
+		displayName = "VIP Islander",
+		gamePassId = 1917812416,
+		robux = 399,
+		effect = "vip",
+	}),
+	table.freeze({
+		id = "pyro_master",
+		displayName = "Pyro Master",
+		gamePassId = 1917770413,
+		robux = 299,
+		effect = "pyro",
+	}),
 	table.freeze({
 		id = "golden_boat",
 		displayName = "Golden Longtail Boat",
-		gamePassId = 0,
+		gamePassId = 1918280412,
 		robux = 199,
 		effect = "goldenBoat",
 	}),
@@ -51,7 +63,7 @@ local passes: { PassDef } = {
 	table.freeze({
 		id = "extra_plot",
 		displayName = "Extra Plot Slot",
-		gamePassId = 0,
+		gamePassId = 1918136410,
 		robux = 349,
 		effect = "extraPlot",
 	}),
@@ -62,7 +74,7 @@ local products: { ProductDef } = {
 	table.freeze({
 		id = "shells_small",
 		displayName = "Handful of Shells",
-		productId = 0,
+		productId = 3610322004,
 		robux = 99,
 		effect = "shells",
 		amount = 5000,
@@ -70,7 +82,7 @@ local products: { ProductDef } = {
 	table.freeze({
 		id = "shells_medium",
 		displayName = "Bag of Shells",
-		productId = 0,
+		productId = 3610322213,
 		robux = 249,
 		effect = "shells",
 		amount = 15000,
@@ -78,7 +90,7 @@ local products: { ProductDef } = {
 	table.freeze({
 		id = "shells_large",
 		displayName = "Chest of Shells",
-		productId = 0,
+		productId = 3610322433,
 		robux = 599,
 		effect = "shells",
 		amount = 42000,
@@ -86,7 +98,7 @@ local products: { ProductDef } = {
 	table.freeze({
 		id = "shells_huge",
 		displayName = "Hoard of Shells",
-		productId = 0,
+		productId = 3610322568,
 		robux = 1299,
 		effect = "shells",
 		amount = 100000,
@@ -94,7 +106,7 @@ local products: { ProductDef } = {
 	table.freeze({
 		id = "hype_boost",
 		displayName = "Hype Boost (+20, 30m)",
-		productId = 0,
+		productId = 3610322714,
 		robux = 49,
 		effect = "hypeBoost",
 		amount = 0,
@@ -102,7 +114,7 @@ local products: { ProductDef } = {
 	table.freeze({
 		id = "repair_all",
 		displayName = "Instant Repair All",
-		productId = 0,
+		productId = 3610322860,
 		robux = 25,
 		effect = "repairAll",
 		amount = 0,
