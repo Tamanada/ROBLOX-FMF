@@ -63,9 +63,9 @@ return function()
 
 	describe("migrations (MigrateTo / Migrate)", function()
 		it("is a no-op when data is already at the target version", function()
-			local data = { dataVersion = 1, shells = 99 }
+			local data = { dataVersion = DataService.DATA_VERSION, shells = 99 }
 			DataService.Migrate(data)
-			expect(data.dataVersion).to.equal(1)
+			expect(data.dataVersion).to.equal(DataService.DATA_VERSION)
 			expect(data.shells).to.equal(99)
 		end)
 

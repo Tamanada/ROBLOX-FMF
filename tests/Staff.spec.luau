@@ -68,7 +68,8 @@ return function()
 				},
 			}
 			local bonuses = StaffService._staffBonuses(data)
-			expect(bonuses.revenue).to.equal(0.3)
+			-- 0.2 + 0.1 is not exactly 0.3 in IEEE-754; compare within tolerance.
+			expect(bonuses.revenue).to.be.near(0.3)
 			expect(bonuses.hype).to.equal(11)
 		end)
 

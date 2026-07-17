@@ -24,7 +24,7 @@ DataService.AUTOSAVE_INTERVAL_SECONDS = Economy.AUTOSAVE_INTERVAL_SECONDS
 -- profile and Reconcile() fills any missing keys on old saves.
 -- Starting balance: §3.2 amendment (Sprint 1) — enables the D0 hook.
 local TEMPLATE: Types.PlayerData = {
-	dataVersion = 2,
+	dataVersion = 3,
 	shells = Economy.STARTING_SHELLS,
 	moonShards = 0,
 	hype = 0,
