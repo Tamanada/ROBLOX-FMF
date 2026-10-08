@@ -1,0 +1,30 @@
+{
+  "version": "APP-GUARDIAN-v1",
+  "commit": "df21a14b3c03805b9790d4f98f85d1d1237947ed",
+  "environment": "local repo audit, Windows, no live Roblox server",
+  "started_at": "2026-10-08",
+  "finished_at": "2026-10-08",
+  "status": "UNVERIFIED",
+  "areas": {
+    "functional": "UNVERIFIED",
+    "security": "PASS_STATIC_ONLY",
+    "data": "PASS_STATIC_ONLY",
+    "accounting": "PASS_STATIC_ONLY",
+    "ux": "UNVERIFIED",
+    "performance": "UNVERIFIED",
+    "regression": "PASS_STATIC"
+  },
+  "findings": [
+    { "id": "G-001", "area": "process", "severity": "P3", "status": "RESOLVED", "summary": "5 commits ahead of origin at audit start; pushed during audit" },
+    { "id": "G-002", "area": "business-rules", "severity": "P3", "status": "OPEN", "summary": "Blueprint 3.2 payback target contradicts section 4 rates; founder decision required" },
+    { "id": "G-003", "area": "test-infra", "severity": "UNVERIFIED", "status": "OPEN", "summary": "TestEZ requires Studio; record a Studio run per release" }
+  ],
+  "evidence": [
+    "luau-lsp 1.36.0 strict analysis at df21a14: PASS (local)",
+    "stylua --check at df21a14: PASS (local)",
+    "GitHub Actions: latest pushed run green",
+    "code inspection: ProcessReceipt idempotence, session locking, Net validation, integer wallet, audit window",
+    "grep: no TextBox / no FilterStringAsync surface (11.3 satisfied by absence)"
+  ],
+  "waivers": []
+}
