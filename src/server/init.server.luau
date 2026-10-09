@@ -20,6 +20,11 @@ local BuildService = require(script.Services.BuildService)
 local StaffService = require(script.Services.StaffService)
 local SocialService = require(script.Services.SocialService)
 local MonetizationService = require(script.Services.MonetizationService)
+local UnlockService = require(script.Services.UnlockService)
+local IslandZoneService = require(script.Services.IslandZoneService)
+local TransportService = require(script.Services.TransportService)
+local MoonCycleService = require(script.Services.MoonCycleService)
+local DebugAdminService = require(script.Services.DebugAdminService)
 
 Net.Server.Start()
 DataService.Init()
@@ -33,6 +38,11 @@ BuildService.Init()
 StaffService.Init() -- §5 recruitment/fusion; wires the Full Moon staff gate
 SocialService.Init() -- §6 visits, ratings, friend bonus
 MonetizationService.Init() -- §8 ProcessReceipt (idempotent) + Game Passes
+UnlockService.Init() -- §14.2 vérité serveur des unlocks de zones
+IslandZoneService.Init() -- §14.1 les 5 zones de l'île
+TransportService.Init() -- §14.3 songthaew + longtail NPC
+MoonCycleService.Init() -- §14.4 cycle lunaire accéléré
+DebugAdminService.Init() -- S7 dev panel (allowlist + Studio)
 
 local function onPlayerAdded(player: Player)
 	local profile = DataService.LoadAsync(player)
@@ -64,6 +74,10 @@ local function onPlayerAdded(player: Player)
 	EventService.TrackPlayer(player)
 	FullMoonService.TrackPlayer(player)
 	NPCService.TrackPlayer(player, data)
+	-- §14 — île : réplique la liste des zones débloquées puis compte
+	-- l'arrivée au hub (base de la règle zoneVisited).
+	UnlockService.TrackPlayer(player, data)
+	IslandZoneService.TrackPlayer(player, data)
 end
 
 Players.PlayerAdded:Connect(onPlayerAdded)
@@ -74,6 +88,8 @@ end
 Players.PlayerRemoving:Connect(function(player: Player)
 	-- Order matters: bank the uncollected pool into the profile BEFORE the
 	-- session is released and saved.
+	TransportService.UntrackPlayer(player) -- stoppe un trajet en cours
+	IslandZoneService.UntrackPlayer(player)
 	NPCService.UntrackPlayer(player)
 	SocialService.UntrackPlayer(player)
 	FullMoonService.UntrackPlayer(player)
@@ -89,4 +105,4 @@ game:BindToClose(function()
 	DataService.ReleaseAll()
 end)
 
-print("[FMF] Sprint 6 server ready — launch build (Zone 3, prestige, leaderboard, onboarding).")
+print("[FMF] Sprint 7 server ready — island map, NPC transport, moon cycle (§14).")
