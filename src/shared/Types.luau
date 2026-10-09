@@ -54,6 +54,13 @@ export type SocialState = {
 	questClaimed: boolean,
 }
 
+-- §14.6 — progression sur l'île (schema v4, S7). Les zones débloquées sont
+-- recalculées depuis ces faits (UnlockRules), jamais persistées en dur.
+export type IslandProgress = {
+	completedVenues: { [string]: boolean },
+	zoneVisits: { [string]: number },
+}
+
 export type PlayerData = {
 	dataVersion: number,
 	shells: number,
@@ -71,6 +78,8 @@ export type PlayerData = {
 	purchaseHistory: { [string]: boolean },
 	festivalRating: FestivalRating,
 	social: SocialState,
+	-- §14.6 — île : venues complétées + compteur de visites par zone (v4, S7).
+	island: IslandProgress,
 	lastSeen: number,
 }
 

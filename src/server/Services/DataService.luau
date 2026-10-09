@@ -17,14 +17,14 @@ local Economy = require(ReplicatedStorage.Shared.Config.Economy)
 local DataService = {}
 
 -- Bump this when adding a migration below.
-DataService.DATA_VERSION = 3
+DataService.DATA_VERSION = 4
 DataService.AUTOSAVE_INTERVAL_SECONDS = Economy.AUTOSAVE_INTERVAL_SECONDS
 
 -- Schéma joueur v1 (§10.4). ProfileStore deep-copies this template per
 -- profile and Reconcile() fills any missing keys on old saves.
 -- Starting balance: §3.2 amendment (Sprint 1) — enables the D0 hook.
 local TEMPLATE: Types.PlayerData = {
-	dataVersion = 3,
+	dataVersion = 4,
 	shells = Economy.STARTING_SHELLS,
 	moonShards = 0,
 	hype = 0,
@@ -43,6 +43,8 @@ local TEMPLATE: Types.PlayerData = {
 	purchaseHistory = {},
 	festivalRating = { sum = 0, count = 0 },
 	social = { day = 0, visitedHosts = {}, ratedHosts = {}, questClaimed = false },
+	-- §14.6 — île : faits de progression (schema v4, S7).
+	island = { completedVenues = {}, zoneVisits = {} },
 	lastSeen = 0,
 }
 
@@ -57,6 +59,7 @@ DataService.TEMPLATE = TEMPLATE
 --
 -- v2 (Sprint 4) — introduce unlockedZones; Zone 1 is unlocked for everyone.
 -- v3 (Sprint 5) — monetization idempotency ledger + social state.
+-- v4 (Sprint 7) — island progression facts (§14.6).
 local MIGRATIONS: { [number]: (data: any) -> () } = {
 	[2] = function(data)
 		if data.unlockedZones == nil then
@@ -72,6 +75,11 @@ local MIGRATIONS: { [number]: (data: any) -> () } = {
 		end
 		if data.social == nil then
 			data.social = { day = 0, visitedHosts = {}, ratedHosts = {}, questClaimed = false }
+		end
+	end,
+	[4] = function(data)
+		if data.island == nil then
+			data.island = { completedVenues = {}, zoneVisits = {} }
 		end
 	end,
 }

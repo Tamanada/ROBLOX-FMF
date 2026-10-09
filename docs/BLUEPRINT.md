@@ -324,6 +324,7 @@ type PlayerData = {
 | **S4 — Profondeur** | StaffService, Repair/casse, EventService (tempête, singes, VIP), Zone 2 | Session 45 min sans friction, sinks fonctionnels |
 | **S5 — Social & monétisation** | SocialService (visites, ratings), Game Passes, Dev Products idempotents, hub | Transaction Robux test validée, visite inter-plots validée |
 | **S6 — Polish & launch** | Zone 3, prestige, leaderboards, onboarding/tutorial, icônes+thumbnails, page produit | Soft launch privé → itération metrics → launch public |
+| **S7 — Île & transport** (amendement 09/10/2026, voir §14) | Carte de l'île en 5 zones, unlock progressif par activités, transport NPC (songthaew + longtail), cycle lunaire accéléré + HUD | Téléport fonctionnel entre les 5 zones via les 2 transports, fare en Shells serveur, unlocks persistés, MoonCycle câblé et testé |
 
 **KPIs de pilotage post-launch :** D1 retention ≥ 25 %, session moyenne ≥ 18 min, % joueurs présents à ≥ 1 Full Moon ≥ 40 %, ARPDAU, ratio earn/buy Moon Shards.
 
@@ -354,6 +355,34 @@ Definition of Done : un joueur rejoint, reçoit un plot, ses données
 persistent entre deux sessions. Ne commence AUCUNE feature de gameplay
 (économie, NPC, Full Moon) dans ce sprint.
 ```
+
+---
+
+## §14 — ÎLE, ZONES & TRANSPORT (amendement S7 — 09/10/2026, approuvé par Alan August)
+
+### 14.1 Principe
+L'île de Koh Phangan devient un **méta-layer partagé par serveur** : 5 zones géographiques explorables. Les **plots tycoon (§6) restent le cœur du jeu** et vivent dans la zone Haad Rin (hub). Les tiers du catalogue d'équipements (§4, `zone` 1/2/3) sont un système distinct de progression du festival du joueur ; ils gardent leurs noms de plages (Haad Rin, Ban Tai, Bottle Beach) mais ne sont pas les zones de l'île. Ban Tai / Baan Tai désignent le même lieu réel ; l'orthographe canonique in-game est « Baan Tai » pour la zone de l'île.
+
+### 14.2 Les 5 zones
+| Zone | Rôle | Accès | Unlock |
+|---|---|---|---|
+| Haad Rin | Hub, spawn, plots, Dancing Elephant Hostel (check-in), 4 slots de venues, 3 slots d'activités plage | Spawn | Toujours débloquée |
+| Baan Tai | Jungle sud, 2 slots de venues | Songthaew depuis Haad Rin | 2 des 4 venues de Haad Rin complétées |
+| Thong Sala | Pier ouest, 3 slots NPC (pier, location motos, taxis) | Songthaew depuis Haad Rin | 1 venue Haad Rin + 1 venue Baan Tai |
+| Haad Yuan | Est, accessible bateau uniquement, 2 slots de venues | Longtail depuis Haad Rin | Les 4 venues de Haad Rin complétées |
+| Haad Thien | Nord de Haad Yuan, 1 slot de venue libre | Sentier depuis Haad Yuan OU longtail depuis Haad Rin | Avoir visité Haad Yuan au moins 1 fois |
+
+### 14.3 Transport NPC
+Songthaew (terre) et longtail (mer), pilotés par des NPC serveur. Embarquement par ProximityPrompt, **fare 50 Shells par trajet** (config par route), trajet scripté de **120 s**, option skip à **×2 du fare total**. Siège verrouillé, débit, enforcement d'unlock et dépose : 100 % serveur (§10.3). Destination verrouillée = refus localisé ; la zone reste visible grisée sur la carte.
+
+### 14.4 Cycle lunaire accéléré
+1 cycle lunaire in-game = 1 période Full Moon réelle (2 h, §10.5), dérivé du MÊME `os.time() % 7200`. Phases : FULL_MOON (0-600 s, coïncide exactement avec l'event §2.3), POST_FULL (900 s), HALF_MOON (1200 s), NEW_MOON (1800 s), HALF_MOON (1200 s), FULL_MOON_EVE (1500 s, fenêtre « Jungle Experience »). HUD top-bar : phase + compte à rebours. Les venues réagiront aux phases dans un sprint ultérieur.
+
+### 14.5 Conformité naming (§9/§11, décision du 09/10/2026)
+Les slots de venues portent des **ids neutres** et des noms d'affichage « TBD » ; toute venue réelle de l'île sera **fictionnalisée** avant implémentation (aucun nom de commerce réel tiers). Exception approuvée : **Dancing Elephant Hostel**, marque détenue par le fondateur. « Half Moon » et « Jungle » restent utilisables comme phases lunaires génériques, jamais comme marques d'événements tiers.
+
+### 14.6 Persistance
+Schéma v4 : `island = { completedVenues, zoneVisits }` (ProfileStore §10.4, migration v3→v4). Les zones débloquées sont **recalculées** depuis ces faits, jamais persistées en dur.
 
 ---
 
