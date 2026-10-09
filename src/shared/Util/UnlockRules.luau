@@ -19,10 +19,7 @@ export type Requirement = {
 	count: number?,
 }
 
-local function countCompletedInZone(
-	progress: IslandProgress,
-	zoneVenues: { string }?
-): number
+local function countCompletedInZone(progress: IslandProgress, zoneVenues: { string }?): number
 	if zoneVenues == nil then
 		return 0
 	end

@@ -117,6 +117,22 @@ Tycoon Roblox — Koh Phangan. **[`docs/BLUEPRINT.md`](docs/BLUEPRINT.md) est le
 
 **DoD S6 :** « Soft launch privé → itération metrics → launch public ». Le build de contenu est complet (3 zones, prestige, leaderboard, onboarding). Restent **hors-code** (Studio/marketing) : icônes + thumbnails + page produit, et le processus de soft-launch/itération metrics (KPIs §12).
 
+### Sprint 7 (Île & transport — §14) ✅
+
+| Tâche | Statut |
+|---|---|
+| Amendement Blueprint §14 (île 5 zones, transport, cycle lunaire, naming §14.5) | ✅ |
+| `Config/Island` + `Config/Routes` + `Config/Unlocks` (source de vérité unique) | ✅ |
+| Schéma v4 : `island { completedVenues, zoneVisits }` + migration | ✅ |
+| `IslandZoneService` — 5 zones placeholder, téléports enforce unlock, sentiers | ✅ |
+| `TransportService` — songthaew + longtail NPC, fare 50 🐚 serveur, trajet 120 s, skip ×2 | ✅ |
+| `UnlockService` + `Util/UnlockRules` (pur, fail-closed) + `MoonCycleService` | ✅ |
+| Client : carte (zones grisées), bandeau de trajet + skip, HUD phase lunaire, Dev Panel | ✅ |
+| Tests `Island.spec` (matrice unlock, MoonCycle aligné §2.3, intégrité configs, v4) | ✅ |
+| `docs/SPRINT_MAP_FOUNDATION.md` (récap, config à régler, procédure de test) | ✅ |
+
+**DoD S7 :** téléport fonctionnel entre les 5 zones via les 2 transports (validation Studio requise, procédure dans le doc), fares serveur, unlocks persistés, MoonCycle câblé et testé. ⚠ Allowlist Dev Panel vide : fournir le UserId Roblox de David.
+
 **Amendement Blueprint §4 (17/07/2026) :** catalogue Zone 3 complet (3 noms ajoutés + chiffres par item, croissance §3.2).
 
 ---

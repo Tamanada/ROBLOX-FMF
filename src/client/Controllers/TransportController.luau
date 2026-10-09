@@ -94,7 +94,8 @@ function TransportController.Start()
 
 			task.spawn(function()
 				while tripToken == token and banner.Visible do
-					title.Text = `🚐 En route vers {destination.displayName} · {formatCountdown(endsAt - os.clock())}`
+					title.Text =
+						`🚐 En route vers {destination.displayName} · {formatCountdown(endsAt - os.clock())}`
 					task.wait(0.25)
 				end
 			end)

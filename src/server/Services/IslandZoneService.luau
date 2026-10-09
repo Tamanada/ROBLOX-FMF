@@ -205,7 +205,7 @@ end
 -- §14.3 — destination verrouillée = refus localisé.
 function IslandZoneService.TeleportToZone(player: Player, zoneId: string, force: boolean): boolean
 	local data = DataService.Get(player)
-	local spawn = spawnByZone[zoneId]
+	local spawn: CFrame? = spawnByZone[zoneId]
 	if data == nil or spawn == nil then
 		return false
 	end

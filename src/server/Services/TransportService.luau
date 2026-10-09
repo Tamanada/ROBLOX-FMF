@@ -22,8 +22,6 @@ local UnlockService = require(script.Parent.UnlockService)
 local TransportService = {}
 
 local MOVE_STEP_SECONDS = 0.1
-local DEFAULT_WALK_SPEED = 16
-local DEFAULT_JUMP_HEIGHT = 7.2
 
 type Trip = {
 	routeId: string,
@@ -74,7 +72,14 @@ local function addDriver(model: Model, origin: CFrame)
 	makePart(model, "DriverLegs", Vector3.new(0.9, 0.9, 0.5), origin * CFrame.new(0, 0.45, 0), NAVY)
 	makePart(model, "DriverTorso", Vector3.new(1.0, 1.0, 0.55), origin * CFrame.new(0, 1.4, 0), CYAN)
 	makePart(model, "DriverHead", Vector3.new(0.6, 0.6, 0.6), origin * CFrame.new(0, 2.25, 0), SKIN)
-	makePart(model, "DriverHat", Vector3.new(0.9, 0.18, 0.9), origin * CFrame.new(0, 2.62, 0), WOOD, Enum.Material.Fabric)
+	makePart(
+		model,
+		"DriverHat",
+		Vector3.new(0.9, 0.18, 0.9),
+		origin * CFrame.new(0, 2.62, 0),
+		WOOD,
+		Enum.Material.Fabric
+	)
 end
 
 local function buildVehicle(vehicleKind: string): Model
@@ -99,7 +104,14 @@ local function buildVehicle(vehicleKind: string): Model
 		makePart(model, "Roof", Vector3.new(5.2, 0.3, 3.4), CFrame.new(-1, 3.9, 0), WOOD)
 		makePart(model, "BenchLeft", Vector3.new(4.6, 0.4, 0.7), CFrame.new(-1, 2.0, 1.2), WOOD_DARK)
 		makePart(model, "BenchRight", Vector3.new(4.6, 0.4, 0.7), CFrame.new(-1, 2.0, -1.2), WOOD_DARK)
-		for index, offset in { Vector3.new(2.4, 0.8, 1.7), Vector3.new(2.4, 0.8, -1.7), Vector3.new(-2.4, 0.8, 1.7), Vector3.new(-2.4, 0.8, -1.7) } do
+		for index, offset in
+			{
+				Vector3.new(2.4, 0.8, 1.7),
+				Vector3.new(2.4, 0.8, -1.7),
+				Vector3.new(-2.4, 0.8, 1.7),
+				Vector3.new(-2.4, 0.8, -1.7),
+			}
+		do
 			local wheel = makePart(
 				model,
 				`Wheel{index}`,
@@ -115,11 +127,38 @@ local function buildVehicle(vehicleKind: string): Model
 		addDriver(model, CFrame.new(3.4, 1.6, -0.8))
 	else -- longtail
 		makePart(model, "Hull", Vector3.new(6, 0.9, 1.8), CFrame.new(0, 0.8, 0), WOOD, Enum.Material.Wood)
-		makePart(model, "Prow", Vector3.new(1.4, 0.8, 1.4), CFrame.new(3.3, 1.35, 0) * CFrame.Angles(0, 0, math.rad(30)), WOOD, Enum.Material.Wood)
-		makePart(model, "Stern", Vector3.new(1.0, 0.7, 1.3), CFrame.new(-3.2, 1.0, 0) * CFrame.Angles(0, 0, math.rad(-16)), WOOD_DARK, Enum.Material.Wood)
+		makePart(
+			model,
+			"Prow",
+			Vector3.new(1.4, 0.8, 1.4),
+			CFrame.new(3.3, 1.35, 0) * CFrame.Angles(0, 0, math.rad(30)),
+			WOOD,
+			Enum.Material.Wood
+		)
+		makePart(
+			model,
+			"Stern",
+			Vector3.new(1.0, 0.7, 1.3),
+			CFrame.new(-3.2, 1.0, 0) * CFrame.Angles(0, 0, math.rad(-16)),
+			WOOD_DARK,
+			Enum.Material.Wood
+		)
 		makePart(model, "TrimL", Vector3.new(6.1, 0.12, 0.14), CFrame.new(0, 1.3, 0.88), CYAN, Enum.Material.Neon)
-		makePart(model, "TrimR", Vector3.new(6.1, 0.12, 0.14), CFrame.new(0, 1.3, -0.88), Color3.fromRGB(255, 46, 146), Enum.Material.Neon)
-		makePart(model, "TailPole", Vector3.new(0.15, 2.6, 0.15), CFrame.new(-3.9, 1.9, 0) * CFrame.Angles(0, 0, math.rad(-38)), WOOD_DARK)
+		makePart(
+			model,
+			"TrimR",
+			Vector3.new(6.1, 0.12, 0.14),
+			CFrame.new(0, 1.3, -0.88),
+			Color3.fromRGB(255, 46, 146),
+			Enum.Material.Neon
+		)
+		makePart(
+			model,
+			"TailPole",
+			Vector3.new(0.15, 2.6, 0.15),
+			CFrame.new(-3.9, 1.9, 0) * CFrame.Angles(0, 0, math.rad(-38)),
+			WOOD_DARK
+		)
 		makePart(model, "Lantern", Vector3.new(0.3, 0.3, 0.3), CFrame.new(3.9, 2.2, 0), GOLD, Enum.Material.Neon)
 		seat.CFrame = CFrame.new(-0.6, 1.5, 0)
 		addDriver(model, CFrame.new(1.6, 1.25, 0))
@@ -206,7 +245,7 @@ local function runTrip(player: Player, routeDef: Routes.RouteDef)
 
 	local character = player.Character
 	local humanoid = if character ~= nil then character:FindFirstChildOfClass("Humanoid") else nil
-	if humanoid == nil then
+	if character == nil or humanoid == nil then
 		carrier:Destroy()
 		return
 	end

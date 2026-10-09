@@ -45,36 +45,54 @@ end
 local list: { RouteDef } = {
 	-- Songthaew (terre)
 	route("hr_to_bt", "songthaew", "haad_rin", "baan_tai", {
-		waypoint(170, 2, -110), waypoint(120, 2, 200), waypoint(170, 2, 490),
+		waypoint(170, 2, -110),
+		waypoint(120, 2, 200),
+		waypoint(170, 2, 490),
 	}),
 	route("bt_to_hr", "songthaew", "baan_tai", "haad_rin", {
-		waypoint(170, 2, 490), waypoint(120, 2, 200), waypoint(170, 2, -110),
+		waypoint(170, 2, 490),
+		waypoint(120, 2, 200),
+		waypoint(170, 2, -110),
 	}),
 	route("hr_to_ts", "songthaew", "haad_rin", "thong_sala", {
-		waypoint(160, 2, -120), waypoint(-80, 2, -40), waypoint(-290, 2, 50),
+		waypoint(160, 2, -120),
+		waypoint(-80, 2, -40),
+		waypoint(-290, 2, 50),
 	}),
 	route("ts_to_hr", "songthaew", "thong_sala", "haad_rin", {
-		waypoint(-290, 2, 50), waypoint(-80, 2, -40), waypoint(160, 2, -120),
+		waypoint(-290, 2, 50),
+		waypoint(-80, 2, -40),
+		waypoint(160, 2, -120),
 	}),
 	-- Longtail (mer) — les chemins passent au large (y = 1, sur l'eau).
 	route("hr_to_hy", "longtail", "haad_rin", "haad_yuan", {
-		waypoint(230, 1, -160), waypoint(520, 1, -60), waypoint(725, 1, 35),
+		waypoint(230, 1, -160),
+		waypoint(520, 1, -60),
+		waypoint(725, 1, 35),
 	}),
 	route("hy_to_hr", "longtail", "haad_yuan", "haad_rin", {
-		waypoint(725, 1, 35), waypoint(520, 1, -60), waypoint(230, 1, -160),
+		waypoint(725, 1, 35),
+		waypoint(520, 1, -60),
+		waypoint(230, 1, -160),
 	}),
 	route("hr_to_ht", "longtail", "haad_rin", "haad_thien", {
-		waypoint(230, 1, -160), waypoint(540, 1, -260), waypoint(725, 1, -310),
+		waypoint(230, 1, -160),
+		waypoint(540, 1, -260),
+		waypoint(725, 1, -310),
 	}),
 	route("ht_to_hr", "longtail", "haad_thien", "haad_rin", {
-		waypoint(725, 1, -310), waypoint(540, 1, -260), waypoint(230, 1, -160),
+		waypoint(725, 1, -310),
+		waypoint(540, 1, -260),
+		waypoint(230, 1, -160),
 	}),
 	-- Sentier Haad Yuan <-> Haad Thien (§14.2 : marche, gratuit).
 	route("hy_to_ht_walk", "footpath", "haad_yuan", "haad_thien", {
-		waypoint(760, 2, 0), waypoint(760, 2, -280),
+		waypoint(760, 2, 0),
+		waypoint(760, 2, -280),
 	}),
 	route("ht_to_hy_walk", "footpath", "haad_thien", "haad_yuan", {
-		waypoint(760, 2, -280), waypoint(760, 2, 0),
+		waypoint(760, 2, -280),
+		waypoint(760, 2, 0),
 	}),
 }
 

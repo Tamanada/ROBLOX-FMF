@@ -142,9 +142,7 @@ function MapController.Start()
 			row.name.Text = (if isCurrent then "📍 " else "")
 				.. Island.byId[zoneId].displayName
 				.. (if isUnlocked then "" else "  🔒")
-			row.reach.TextColor3 = if isUnlocked
-				then Color3.fromRGB(159, 176, 204)
-				else Color3.fromRGB(100, 110, 128)
+			row.reach.TextColor3 = if isUnlocked then Color3.fromRGB(159, 176, 204) else Color3.fromRGB(100, 110, 128)
 		end
 	end
 
